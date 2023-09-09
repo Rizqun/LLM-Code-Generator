@@ -1,0 +1,12 @@
+﻿Based on the user request to develop an application below:
+---
+{{recall $input}}
+---
+
+Define the input of the application, the output of the application, and then output into the following json format.
+Please ONLY ouput the JSON without any opening or closing words:
+The JSON format should read:
+{
+  "input": "string of json serialized list of input name and input type. the name should be using pascal naming convention.",
+  "output": "string of output name. the name should be using pascal naming convention."
+}

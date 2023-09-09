@@ -1,0 +1,21 @@
+﻿{
+  "schema": 1,
+  "type": "completion",
+  "description": "Generate code based on specific prompt request",
+  "completion": {
+    "max_tokens": 1500,
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "presence_penalty": 0.0,
+    "frequency_penalty": 0.0
+  },
+  "input": {
+    "parameters": [
+      {
+        "name": "input",
+        "description": "The user's request.",
+        "defaultValue": ""
+      }
+    ]
+  }
+}
