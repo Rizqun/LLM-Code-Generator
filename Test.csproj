@@ -31,4 +31,21 @@
 	  </Content>
   </ItemGroup>
 
+	<ItemGroup>
+		<Compile Remove="Templates\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="Templates\**">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Remove="AI\Plugins\CodeGenerator\UpdateMethod\config.json" />
+	  <None Remove="AI\Plugins\CodeGenerator\UpdateMethod\skprompt.txt" />
+	  <None Remove="AI\Plugins\CodeGenerator\UpdateReference\config.json" />
+	  <None Remove="AI\Plugins\CodeGenerator\UpdateReference\skprompt.txt" />
+	</ItemGroup>
+
 </Project>
