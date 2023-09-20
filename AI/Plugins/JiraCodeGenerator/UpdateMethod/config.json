@@ -1,0 +1,26 @@
+﻿{
+  "schema": 1,
+  "type": "completion",
+  "description": "Update method inside class",
+  "completion": {
+    "max_tokens": 1500,
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "presence_penalty": 0.0,
+    "frequency_penalty": 0.0
+  },
+  "input": {
+    "parameters": [
+      {
+        "name": "prompt",
+        "description": "The user's prompt.",
+        "defaultValue": ""
+      },
+      {
+        "name": "requirement",
+        "description": "Requirement from JIRA.",
+        "defaultValue": ""
+      }
+    ]
+  }
+}

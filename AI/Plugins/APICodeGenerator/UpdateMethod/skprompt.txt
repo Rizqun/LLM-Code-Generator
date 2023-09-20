@@ -1,0 +1,18 @@
+﻿Based on the user prompt below:
+---
+{{$prompt}}
+---
+
+And the available API URL below:
+---
+{{$apiUrl}}
+---
+
+Please complete the 'Public static async Task Execute' method to implement the solution based on the user prompt.
+Set the namespace name as 'Project' and the class name as 'Service'.
+Please use Console.Writeline to asks user to give an input, use Console.Readline for the user to insert the input value, and use Console.Writeline to return the output if it is required.
+You can also use any library that you think is best and can help you to complete the job.
+The code must contain logic for the required authentication too.
+
+Please only output the solution within the method without any opening and closing sentences.
+You can give comment to help explain the code.

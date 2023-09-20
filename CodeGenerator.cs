@@ -1,6 +1,8 @@
 ﻿using Test.Models;
 using Test.Services;
 using Microsoft.Extensions.Configuration;
+using Spectre.Console;
+using Test.Constants;
 
 namespace Test
 {
@@ -32,29 +34,53 @@ namespace Test
 
             var userInput = new UserInput();
 
-            // Get user input
-            Console.WriteLine("Prompt: ");
-            userInput.Prompt = Console.ReadLine();
-            Console.WriteLine("Jira Issue Key: ");
-            userInput.JiraIssueKey = Console.ReadLine();
-            Console.WriteLine("API Documentation URL: ");
-            userInput.APIDocumentationURL = Console.ReadLine();
-            Console.WriteLine("Project Name: ");
-            userInput.ProjectName = Console.ReadLine();
-            Console.WriteLine("Project Location: ");
-            userInput.ProjectLocation = Console.ReadLine();
+            var purpose = AnsiConsole.Prompt(
+                        new SelectionPrompt<string>()
+                        .Title("What do you want to do?")
+                        .PageSize(4)
+                        .HighlightStyle("steelblue1")
+                        .AddChoices(new[] {
+                            Purpose.GenerateFromJira,
+                            Purpose.GenerateFromAPI,
+                            Purpose.GenerateFromJiraAndAPI,
+                            Purpose.UpdateSolution
+                        }));
+
+            if (purpose != Purpose.UpdateSolution)
+            {
+                Console.WriteLine("Prompt: ");
+                userInput.Prompt = Console.ReadLine();
+                if (purpose != Purpose.GenerateFromAPI)
+                {
+                    Console.WriteLine("Jira Issue Key: ");
+                    userInput.JiraIssueKey = Console.ReadLine();
+                }
+                if (purpose != Purpose.GenerateFromJira)
+                {
+                    Console.WriteLine("API Documentation URL: ");
+                    userInput.APIDocumentationURL = Console.ReadLine();
+                }
+                Console.WriteLine("Project Name: ");
+                userInput.ProjectName = Console.ReadLine();
+                Console.WriteLine("Project Location: ");
+                userInput.ProjectLocation = Console.ReadLine();
+            }
+            else
+            {
+                // TODO: define inputs for update solution
+            }
 
             if (string.IsNullOrEmpty(userInput.APIDocumentationURL))
             {
                 await ProjectGeneratorService.Create(userInput);
                 var requirement = await JiraService.GetJiraIssueDetails(jiraConfig, userInput);
-
-                await LLMService.GenerateCode(userInput, openAIConfig, requirement);
+                await LLMService.GenerateCode(userInput, openAIConfig, requirement, purpose);
             }
             else
             {
-                var documentationContent = await WebScrapingService.GetWebContent(userInput.APIDocumentationURL);
-                await LLMService.DefineProjectProperties(userInput.Prompt, documentationContent, openAIConfig);
+                await ProjectGeneratorService.Create(userInput);
+                var apiUrl = await WebScrapingService.GetWebContent(userInput.APIDocumentationURL);
+                await LLMService.GenerateCode(userInput, openAIConfig, apiUrl, purpose);
             }
         }
 

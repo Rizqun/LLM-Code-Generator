@@ -2,7 +2,7 @@
 {
     public class Service
     {
-        public async Task Execute()
+        public static async Task Execute()
         {
 
         }

@@ -1,5 +1,6 @@
 ﻿using Test;
 using Microsoft.Extensions.Configuration;
+using Spectre.Console;
 
 class Program
 {

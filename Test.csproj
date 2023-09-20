@@ -12,7 +12,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0-preview.7.23375.6" />
     <PackageReference Include="Microsoft.ML" Version="2.0.1" />
     <PackageReference Include="Microsoft.SemanticKernel" Version="0.21.230828.2-preview" />
-    <PackageReference Include="PuppeteerSharp" Version="10.1.2" />
+    <PackageReference Include="Spectre.Console" Version="0.47.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,15 +22,19 @@
   </ItemGroup>
 
   <ItemGroup>
-	  <Compile Remove="AI\Plugins\CodeGenerator\**" />
+	  <Compile Remove="AI\Plugins\APICodeGenerator\**" />
+	  <Compile Remove="AI\Plugins\JiraCodeGenerator\**" />
   </ItemGroup>
 
   <ItemGroup>
-	  <Content Include="AI\Plugins\CodeGenerator\**">
+	  <Content Include="AI\Plugins\APICodeGenerator\**">
 		 <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </Content>
+	  <Content Include="AI\Plugins\JiraCodeGenerator\**">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
   </ItemGroup>
-
+	
 	<ItemGroup>
 		<Compile Remove="Templates\**" />
 	</ItemGroup>
@@ -42,10 +46,27 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Remove="AI\Plugins\CodeGenerator\UpdateMethod\config.json" />
-	  <None Remove="AI\Plugins\CodeGenerator\UpdateMethod\skprompt.txt" />
-	  <None Remove="AI\Plugins\CodeGenerator\UpdateReference\config.json" />
-	  <None Remove="AI\Plugins\CodeGenerator\UpdateReference\skprompt.txt" />
+	  <None Remove="AI\Plugins\JiraCodeGenerator\UpdateMethod\config.json" />
+	  <None Remove="AI\Plugins\JiraCodeGenerator\UpdateMethod\skprompt.txt" />
+	  <None Remove="AI\Plugins\JiraCodeGenerator\UpdateReference\config.json" />
+	  <None Remove="AI\Plugins\JiraCodeGenerator\UpdateReference\skprompt.txt" />
+	  <None Remove="AI\Plugins\APICodeGenerator\UpdateMethod\config.json" />
+	  <None Remove="AI\Plugins\APICodeGenerator\UpdateMethod\skprompt.txt" />
+	  <None Remove="AI\Plugins\APICodeGenerator\UpdateReference\config.json" />
+	  <None Remove="AI\Plugins\APICodeGenerator\UpdateReference\skprompt.txt" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Content Include="AI\Plugins\JiraCodeGenerator\GenerateCode\config.json" />
+	  <Content Include="AI\Plugins\JiraCodeGenerator\GenerateCode\skprompt.txt" />
+	  <Content Include="AI\Plugins\JiraCodeGenerator\UpdateMethod\config.json" />
+	  <Content Include="AI\Plugins\JiraCodeGenerator\UpdateMethod\skprompt.txt" />
+	  <Content Include="AI\Plugins\JiraCodeGenerator\UpdateReference\config.json" />
+	  <Content Include="AI\Plugins\JiraCodeGenerator\UpdateReference\skprompt.txt" />
+      <Content Include="AI\Plugins\APICodeGenerator\UpdateMethod\config.json" />
+	  <Content Include="AI\Plugins\APICodeGenerator\UpdateMethod\skprompt.txt" />
+	  <Content Include="AI\Plugins\APICodeGenerator\UpdateReference\config.json" />
+	  <Content Include="AI\Plugins\APICodeGenerator\UpdateReference\skprompt.txt" />
 	</ItemGroup>
 
 </Project>

@@ -1,7 +1,7 @@
 ﻿{
   "schema": 1,
   "type": "completion",
-  "description": "Create method inside class",
+  "description": "Update reference in csproj file",
   "completion": {
     "max_tokens": 1500,
     "temperature": 0.0,
@@ -14,11 +14,6 @@
       {
         "name": "input",
         "description": "The user's request.",
-        "defaultValue": ""
-      },
-      {
-        "name": "requirement",
-        "description": "Requirement from JIRA.",
         "defaultValue": ""
       }
     ]
