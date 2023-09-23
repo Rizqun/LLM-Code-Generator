@@ -1,4 +1,4 @@
-﻿using Test;
+﻿using CodeGenerator;
 using Microsoft.Extensions.Configuration;
 using Spectre.Console;
 
@@ -11,6 +11,6 @@ class Program
             .AddJsonFile("appsettings.json")
             .Build();
 
-        await new CodeGenerator(configuration).Generate();
+        await new Generator(configuration).Generate();
     }
 }

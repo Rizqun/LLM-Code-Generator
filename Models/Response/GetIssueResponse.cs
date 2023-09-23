@@ -1,4 +1,4 @@
-﻿namespace Test.Models.Response
+﻿namespace CodeGenerator.Models.Response
 {
     public class GetIssueResponse
     {

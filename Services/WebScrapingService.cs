@@ -1,14 +1,13 @@
 ﻿using HtmlAgilityPack;
 using System.Text.RegularExpressions;
 
-namespace Test.Services
+namespace CodeGenerator.Services
 {
     public class WebScrapingService
     {
         public static async Task<string> GetWebContent(string url)
         {
             var result = ScrapeAndCleanData(url);
-            Console.WriteLine(result);
 
             return result;
         }

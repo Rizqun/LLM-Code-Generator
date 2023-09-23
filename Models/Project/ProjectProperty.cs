@@ -1,4 +1,4 @@
-﻿namespace Test.Models.Project
+﻿namespace CodeGenerator.Models.Project
 {
     public class ProjectProperty
     {

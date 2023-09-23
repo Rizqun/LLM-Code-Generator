@@ -1,4 +1,4 @@
-﻿namespace Test.Constants
+﻿namespace CodeGenerator.Constants
 {
     public static class Purpose
     {

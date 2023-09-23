@@ -1,4 +1,4 @@
-﻿namespace Test.Models
+﻿namespace CodeGenerator.Models
 {
     public class UserInput
     {

@@ -1,7 +1,7 @@
-﻿using Test.Helpers;
-using Test.Models;
+﻿using CodeGenerator.Helpers;
+using CodeGenerator.Models;
 
-namespace Test.Services
+namespace CodeGenerator.Services
 {
     public class ProjectGeneratorService
     {

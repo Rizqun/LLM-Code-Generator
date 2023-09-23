@@ -1,9 +1,9 @@
 ﻿using System.Diagnostics.Metrics;
-using Test.Helpers;
-using Test.Models;
-using Test.Models.Response;
+using CodeGenerator.Helpers;
+using CodeGenerator.Models;
+using CodeGenerator.Models.Response;
 
-namespace Test.Services
+namespace CodeGenerator.Services
 {
     public class JiraService
     {

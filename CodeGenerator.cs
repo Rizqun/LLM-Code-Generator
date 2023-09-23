@@ -1,16 +1,16 @@
-﻿using Test.Models;
-using Test.Services;
+﻿using CodeGenerator.Models;
+using CodeGenerator.Services;
 using Microsoft.Extensions.Configuration;
 using Spectre.Console;
-using Test.Constants;
+using CodeGenerator.Constants;
 
-namespace Test
+namespace CodeGenerator
 {
-    public class CodeGenerator
+    public class Generator
     {
         private IConfiguration _configuration;
 
-        public CodeGenerator(IConfiguration configuration)
+        public Generator(IConfiguration configuration)
         {
             _configuration = configuration;
         }
@@ -83,6 +83,5 @@ namespace Test
                 await LLMService.GenerateCode(userInput, openAIConfig, apiUrl, purpose);
             }
         }
-
     }
 }

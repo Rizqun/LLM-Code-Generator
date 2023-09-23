@@ -1,14 +1,14 @@
-﻿using Test.Models;
-using Test.Models.Project;
+﻿using CodeGenerator.Models;
+using CodeGenerator.Models.Project;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Memory;
 using Microsoft.SemanticKernel.Skills.Core;
 using System.Text.Json;
 using Microsoft.SemanticKernel.Text;
 using Microsoft.SemanticKernel.Orchestration;
-using Test.Constants;
+using CodeGenerator.Constants;
 
-namespace Test.Services
+namespace CodeGenerator.Services
 {
     public static class LLMService
     {
@@ -104,7 +104,7 @@ namespace Test.Services
 
         public static async Task GenerateFromAPI(IKernel kernel, UserInput userInput, string apiUrl)
         {
-            // Import skill related to JIRA
+            // Import skill related to API Url
             var pluginsDirectory = Path.Combine(Directory.GetCurrentDirectory(), "AI", "Plugins");
             kernel.ImportSemanticSkillFromDirectory(pluginsDirectory, "APICodeGenerator");
 
@@ -114,6 +114,7 @@ namespace Test.Services
             var fileFunction = kernel.Skills.GetFunction("file", "Write");
 
             var context = new ContextVariables();
+
             context.Set("path", Path.Combine(userInput.ProjectLocation, "Service.cs"));
             context.Set("prompt", userInput.Prompt);
             context.Set("apiUrl", apiUrl);

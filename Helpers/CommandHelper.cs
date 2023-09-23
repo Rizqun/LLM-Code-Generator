@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Text;
 
-namespace Test.Helpers
+namespace CodeGenerator.Helpers
 {
     public class CommandHelper
     {

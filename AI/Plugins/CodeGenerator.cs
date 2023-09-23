@@ -4,7 +4,7 @@ using Microsoft.SemanticKernel.SkillDefinition;
 using System.ComponentModel;
 using System.Text.RegularExpressions;
 
-namespace Test.AI.Plugins
+namespace CodeGenerator.AI.Plugins
 {
     public class CodeGenerator
     {

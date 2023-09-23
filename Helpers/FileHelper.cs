@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace Test.Helpers
+namespace CodeGenerator.Helpers
 {
     public class FileHelper
     {

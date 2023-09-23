@@ -1,7 +1,7 @@
 ﻿using System.Net.Http.Headers;
 using System.Text.Json;
 
-namespace Test.Services
+namespace CodeGenerator.Services
 {
     public class HttpClientService
     {
