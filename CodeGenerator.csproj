@@ -11,7 +11,8 @@
     <PackageReference Include="HtmlAgilityPack" Version="1.11.52" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0-preview.7.23375.6" />
     <PackageReference Include="Microsoft.ML" Version="2.0.1" />
-    <PackageReference Include="Microsoft.SemanticKernel" Version="0.21.230828.2-preview" />
+    <PackageReference Include="Microsoft.SemanticKernel" Version="0.24.230918.1-preview" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Qdrant" Version="0.24.230918.1-preview" />
     <PackageReference Include="Spectre.Console" Version="0.47.0" />
   </ItemGroup>
 
@@ -46,6 +47,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <None Remove="AI\Plugins\APICodeGenerator\GetMethodAndEndpoint\config.json" />
+	  <None Remove="AI\Plugins\APICodeGenerator\GetMethodAndEndpoint\skprompt.txt" />
+	  <None Remove="AI\Plugins\APICodeGenerator\GetRequestBodyProperty\config.json" />
+	  <None Remove="AI\Plugins\APICodeGenerator\GetRequestBodyProperty\skprompt.txt" />
 	  <None Remove="AI\Plugins\JiraCodeGenerator\UpdateMethod\config.json" />
 	  <None Remove="AI\Plugins\JiraCodeGenerator\UpdateMethod\skprompt.txt" />
 	  <None Remove="AI\Plugins\JiraCodeGenerator\UpdateReference\config.json" />

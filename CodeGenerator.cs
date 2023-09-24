@@ -21,6 +21,7 @@ namespace CodeGenerator
             var openAIConfig = new OpenAIConfig()
             {
                 Model = _configuration["OpenAI:Model"],
+                Embedding = _configuration["OpenAI:Embedding"],
                 Key = _configuration["OpenAI:Key"]
             };
 
@@ -30,6 +31,13 @@ namespace CodeGenerator
                 Organization = _configuration["Jira:Organization"],
                 Username = _configuration["Jira:Username"],
                 Key = _configuration["Jira:Key"]
+            };
+
+            // Get Qdrant information and insert to Qdrant config
+            var qdrantConfig = new QdrantConfig()
+            {
+                Host = _configuration["Qdrant:Host"],
+                Key = _configuration["Qdrant:Key"]
             };
 
             var userInput = new UserInput();
@@ -80,7 +88,7 @@ namespace CodeGenerator
             {
                 await ProjectGeneratorService.Create(userInput);
                 var apiUrl = await WebScrapingService.GetWebContent(userInput.APIDocumentationURL);
-                await LLMService.GenerateCode(userInput, openAIConfig, apiUrl, purpose);
+                await LLMService.GenerateCode(userInput, openAIConfig, apiUrl, purpose, qdrantConfig);
             }
         }
     }

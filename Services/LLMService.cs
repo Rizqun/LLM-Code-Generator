@@ -7,6 +7,10 @@ using System.Text.Json;
 using Microsoft.SemanticKernel.Text;
 using Microsoft.SemanticKernel.Orchestration;
 using CodeGenerator.Constants;
+using Microsoft.SemanticKernel.Connectors.Memory.Qdrant;
+using CodeGenerator.Models.Response;
+using Spectre.Console;
+using System.Collections;
 
 namespace CodeGenerator.Services
 {
@@ -48,7 +52,7 @@ namespace CodeGenerator.Services
 
             var result = await kernel.RunAsync(context.Variables, kernel.Skills.GetFunction("CodeGenerator", "GenerateCode"));
 
-            string request = result["input"];
+            string request = result.Variables["input"];
 
             var projectProperty = JsonSerializer.Deserialize<ProjectProperty>(request, new JsonSerializerOptions
             {
@@ -57,13 +61,16 @@ namespace CodeGenerator.Services
 
         }
 
-        public static async Task GenerateCode(UserInput userInput, OpenAIConfig openAIConfig, string requirement, string purpose)
+        public static async Task GenerateCode(UserInput userInput, OpenAIConfig openAIConfig, string requirement, string purpose, QdrantConfig? qdrantConfig = null)
         {
             // Set up kernels
             var builder = new KernelBuilder();
 
             // Using OpenAI
             builder.WithOpenAIChatCompletionService(openAIConfig.Model, openAIConfig.Key);
+            builder.WithOpenAITextEmbeddingGenerationService(openAIConfig.Embedding, openAIConfig.Key); // It is required if using qdrant
+
+            // Build kernel
             IKernel kernel = builder.Build();
 
             // Import generic skill to be used
@@ -73,7 +80,7 @@ namespace CodeGenerator.Services
             if (purpose == Purpose.GenerateFromJira)
                 await GenerateFromJira(kernel, userInput, requirement);
             else if (purpose == Purpose.GenerateFromAPI)
-                await GenerateFromAPI(kernel, userInput, requirement);
+                await GenerateFromAPI(kernel, userInput, requirement, qdrantConfig);
         }
 
         public static async Task GenerateFromJira(IKernel kernel, UserInput userInput, string requirement)
@@ -96,37 +103,133 @@ namespace CodeGenerator.Services
 
             // Update csproj file to add some package reference if needed
             var generateCsprojFunction = kernel.Skills.GetFunction("JiraCodeGenerator", "UpdateReference");
-            context = new ContextVariables(result["input"]);
+            context = new ContextVariables(result.Variables["input"]);
             context.Set("path", Path.Combine(userInput.ProjectLocation, $"{userInput.ProjectName}.csproj"));
 
             result = await kernel.RunAsync(context, generateCsprojFunction, extractFilePathAndContentFunction, fileFunction);
         }
 
-        public static async Task GenerateFromAPI(IKernel kernel, UserInput userInput, string apiUrl)
+        public static async Task GenerateFromAPI(IKernel kernel, UserInput userInput, string documentationContent, QdrantConfig qdrantConfig)
         {
+            // Using Qdrant
+            HttpClient httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Add("api-key", qdrantConfig.Key);
+            httpClient.BaseAddress = new Uri(qdrantConfig.Host);
+            kernel.UseMemory(new QdrantMemoryStore(httpClient, 1536));
+
+            // Insert documentation content to memory
+            await InsertDocumentationToMemory(kernel, documentationContent);
+
             // Import skill related to API Url
             var pluginsDirectory = Path.Combine(Directory.GetCurrentDirectory(), "AI", "Plugins");
+            kernel.ImportSkill(new TextMemorySkill(kernel.Memory));
             kernel.ImportSemanticSkillFromDirectory(pluginsDirectory, "APICodeGenerator");
 
-            // Modify execute method to implement the solution based on the requirement
-            var updateMethodFunction = kernel.Skills.GetFunction("APICodeGenerator", "UpdateMethod");
-            var extractFilePathAndContentFunction = kernel.Skills.GetFunction("CodeGenerator", "ExtractFilePathAndContent");
-            var fileFunction = kernel.Skills.GetFunction("file", "Write");
-
+            // EXECUTE FUNCTION : Execute function to get API method and endpoint URL
             var context = new ContextVariables();
+            var projectProperty = new ProjectProperty();
+            
+            var getMethodAndEndpointFunction = kernel.Skills.GetFunction("APICodeGenerator", "GetMethodAndEndpoint");
+            context.Set(TextMemorySkill.CollectionParam, "api-url-documentation");
+            context.Set(TextMemorySkill.RelevanceParam, "0.8");
+            context.Set("question", $"What is the API method and endpoint for this request: {userInput.Prompt}?");
+            var result = new SKContext();
+            var success = false;
+            var retry = 0;
 
-            context.Set("path", Path.Combine(userInput.ProjectLocation, "Service.cs"));
+            while (!success && retry < 5)
+            {
+                try
+                {
+                    result = await kernel.RunAsync(context, getMethodAndEndpointFunction);
+                    projectProperty.ApiEndpoint = JsonSerializer.Deserialize<APIEndpoint>(result.Variables["INPUT"], new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+
+                    success = true;
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine("Failed to get the API method and endpoint. Retrying...");
+                }
+                retry++;
+            }
+
+            // EXECUTE FUNCTION : Execute function to get the authentication method
+            var getAuthenticationMethodFunction = kernel.Skills.GetFunction("APICodeGenerator", "GetAuthenticationMethod");
+            context.Set("question", $"What is the best authentication method for this request: {userInput.Prompt}, to hit API URL {projectProperty.ApiEndpoint.Endpoint} using {projectProperty.ApiEndpoint.Method} method?");
+            success = false;
+            retry = 0;
+            while (!success && retry < 5)
+            {
+                try
+                {
+                    result = await kernel.RunAsync(context, getAuthenticationMethodFunction);
+
+                    if (result.Variables["INPUT"] == AuthenticationMethod.OAuth || result.Variables["INPUT"] == AuthenticationMethod.APIKey || result.Variables["INPUT"] == AuthenticationMethod.BearerToken || result.Variables["INPUT"] == AuthenticationMethod.BasicAuth)
+                    {
+                        projectProperty.ApiEndpoint.AuthenticationMethod = result.Variables["INPUT"];
+                        success = true;
+                    }
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine("Failed to get the authentication method. Retrying...");
+                }
+                retry++;
+            }
+
+            // EXECUTE FUNCTION : Execute function to get the request body required when sending a request to the API
+            if (projectProperty.ApiEndpoint.NeedRequestBody == true)
+            {
+                var getRequestBodyFunction = kernel.Skills.GetFunction("APICodeGenerator", "GetRequestBodyProperty");
+                context.Set("question", $"What are the request body for this request: {userInput.Prompt}, using the {projectProperty.ApiEndpoint.Method} method to hit {projectProperty.ApiEndpoint.Endpoint}?");
+
+                result = await kernel.RunAsync(context, getRequestBodyFunction);
+            }
+
+            // TESTING: Answer question
+            //var memoryList = new List<MemoryQueryResult>();
+            //var searchResults = kernel.Memory.SearchAsync("api-url-documentation", userInput.Prompt, 100);
+
+            //await foreach(var searchResult in searchResults)
+            //{
+            //    memoryList.Add(searchResult);
+            //}
+
+            //memoryList = memoryList.OrderByDescending(m => m.Relevance).ToList();
+
+            // Modify execute method to implement the solution based on the requirement
+            //var updateMethodFunction = kernel.Skills.GetFunction("APICodeGenerator", "UpdateMethod");
+            //var extractFilePathAndContentFunction = kernel.Skills.GetFunction("CodeGenerator", "ExtractFilePathAndContent");
+            //var fileFunction = kernel.Skills.GetFunction("file", "Write");
+
+            //context.Set("path", Path.Combine(userInput.ProjectLocation, "Service.cs"));
             context.Set("prompt", userInput.Prompt);
-            context.Set("apiUrl", apiUrl);
+            //context.Set("apiUrl", apiUrl);
 
-            var result = await kernel.RunAsync(context, updateMethodFunction, extractFilePathAndContentFunction, fileFunction);
+            //var result = await kernel.RunAsync(context, answerQuestionFunction);
+            //var result = await kernel.RunAsync(context, updateMethodFunction, extractFilePathAndContentFunction, fileFunction);
 
             // Update csproj file to add some package reference if needed
             var generateCsprojFunction = kernel.Skills.GetFunction("APICodeGenerator", "UpdateReference");
-            context = new ContextVariables(result["input"]);
+            //context = new ContextVariables(result.Variables["input"]);
             context.Set("path", Path.Combine(userInput.ProjectLocation, $"{userInput.ProjectName}.csproj"));
 
-            result = await kernel.RunAsync(context, generateCsprojFunction, extractFilePathAndContentFunction, fileFunction);
+            //result = await kernel.RunAsync(context, generateCsprojFunction, extractFilePathAndContentFunction, fileFunction);
+        }
+
+        private static async Task InsertDocumentationToMemory(IKernel kernel, string documentationContent)
+        {
+            var lines = TextChunker.SplitPlainTextLines(documentationContent, 100);
+            var paragraphs = TextChunker.SplitPlainTextParagraphs(lines, 800);
+
+            foreach (var paragraph in paragraphs)
+            {
+                await kernel.Memory.SaveInformationAsync(
+                    collection: "api-url-documentation",
+                    text: paragraph,
+                    id: Guid.NewGuid().ToString()
+                );
+            }
         }
     }
 }

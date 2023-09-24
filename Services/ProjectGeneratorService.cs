@@ -11,6 +11,9 @@ namespace CodeGenerator.Services
             var sourceFolder = Path.Combine(FileHelper.AssemblyDirectory, "Templates/Project");
             var targetFolder = userInput.ProjectLocation;
 
+            if (Directory.Exists(targetFolder))
+                Directory.Delete(targetFolder, true);
+
             FileHelper.Copy(sourceFolder, targetFolder);
 
             await CreateSolution(userInput);

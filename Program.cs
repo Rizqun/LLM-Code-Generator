@@ -1,7 +1,5 @@
 ﻿using CodeGenerator;
 using Microsoft.Extensions.Configuration;
-using Spectre.Console;
-
 class Program
 {
     static async Task Main(string[] args)

@@ -1,0 +1,17 @@
+﻿Based on the question below:
+---
+{{$question}}
+---
+
+And the information below:
+---
+{{recall $question}}
+----
+
+Please return a method and the endpoint in JSON format without any opening or closing words. Please also include whether hitting the API require a request body or not.
+The JSON must be in this format:
+{
+	"method": "API method, such as GET, POST, PUT, DELETE, or PATCH. Only one method can be chosen."
+	"endpoint": "API endpoint URL, for example https://www.googleapis.com/upload/drive/v3/files. If any part of the API endpoint is dynamic, please enclose it within curly braces {}, like this: https://{host}/upload/drive/v3/files.",
+	"needRequestBody": boolean value, either true or false
+}

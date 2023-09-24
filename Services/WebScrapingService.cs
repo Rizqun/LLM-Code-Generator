@@ -1,13 +1,20 @@
 ﻿using HtmlAgilityPack;
+using Microsoft.SemanticKernel.Connectors.Memory.Qdrant;
 using System.Text.RegularExpressions;
 
 namespace CodeGenerator.Services
 {
     public class WebScrapingService
     {
-        public static async Task<string> GetWebContent(string url)
+        public static async Task<string> GetWebContent(string documentationUrls)
         {
-            var result = ScrapeAndCleanData(url);
+            var urls = documentationUrls.Split(",");
+            var result = string.Empty;
+
+            foreach(var url in urls)
+            {
+                result = $"\n\n{ScrapeAndCleanData(url)}";
+            }
 
             return result;
         }
@@ -20,7 +27,7 @@ namespace CodeGenerator.Services
 
             // Get specific content related to API URL from scrapped content
             var apiUrlNodes = doc.DocumentNode.Descendants()
-                            .Where(node => node.Name == "code" && (node.InnerText.Contains("POST") || node.InnerText.Contains("GET") || node.InnerText.Contains("PUT") || node.InnerText.Contains("DELETE")) && node.InnerText.Contains("https"))
+                            .Where(node => node.Name == "body")
                             .ToList();
 
             // Get text from selected nodes (so the html tag will not included) 
@@ -48,6 +55,7 @@ namespace CodeGenerator.Services
             var cleanedText = input.Trim();
             cleanedText = Regex.Replace(cleanedText, @"( )+", " ");
             cleanedText = Regex.Replace(cleanedText, @"(\n)+", "\n");
+            cleanedText = Regex.Replace(cleanedText, @"(\n )+", "\n");
 
             return cleanedText;
         }

@@ -1,0 +1,26 @@
+﻿Based on the question below:
+---
+{{$question}}
+---
+
+And the information below:
+---
+{{recall $question}}
+----
+
+Please return a JSON array that contains property in request body. Please DO NOT insert all possible property, INCLUDE all of the REQUIRED properties, and for the optional property in request body, you can choose UP TO 2 properties. It is also OK if you don't want to include OPTIONAL property in the JSON array.
+Please return the JSON array without any opening or closing words.
+
+Below is the example of returned JSON array:
+[
+	{
+		"name": "property name 1",
+		"type": "the type data of property, like string, int, boolean, or other",
+		"isRequired": "set value to true if the property is required in request body, set value to false if the property is not required"
+	},
+	{
+		"name": "property name 2",
+		"type": "the type data of property, like string, int, boolean, or other",
+		"isRequired": "set value to true if the property is required in request body, set value to false if the property is not required"
+	}
+]
