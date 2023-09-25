@@ -1,7 +1,7 @@
 ﻿{
   "schema": 1,
   "type": "completion",
-  "description": "Get best authentication method",
+  "description": "Get API method and endpoint",
   "completion": {
     "max_tokens": 1500,
     "temperature": 0.0,

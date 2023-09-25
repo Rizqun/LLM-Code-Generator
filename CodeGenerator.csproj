@@ -47,6 +47,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <None Remove="AI\Plugins\APICodeGenerator\GetInput\config.json" />
+	  <None Remove="AI\Plugins\APICodeGenerator\GetInput\skprompt.txt" />
 	  <None Remove="AI\Plugins\APICodeGenerator\GetMethodAndEndpoint\config.json" />
 	  <None Remove="AI\Plugins\APICodeGenerator\GetMethodAndEndpoint\skprompt.txt" />
 	  <None Remove="AI\Plugins\APICodeGenerator\GetRequestBodyProperty\config.json" />

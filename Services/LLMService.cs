@@ -153,30 +153,6 @@ namespace CodeGenerator.Services
                 retry++;
             }
 
-            // EXECUTE FUNCTION : Execute function to get the authentication method
-            var getAuthenticationMethodFunction = kernel.Skills.GetFunction("APICodeGenerator", "GetAuthenticationMethod");
-            context.Set("question", $"What is the best authentication method for this request: {userInput.Prompt}, to hit API URL {projectProperty.ApiEndpoint.Endpoint} using {projectProperty.ApiEndpoint.Method} method?");
-            success = false;
-            retry = 0;
-            while (!success && retry < 5)
-            {
-                try
-                {
-                    result = await kernel.RunAsync(context, getAuthenticationMethodFunction);
-
-                    if (result.Variables["INPUT"] == AuthenticationMethod.OAuth || result.Variables["INPUT"] == AuthenticationMethod.APIKey || result.Variables["INPUT"] == AuthenticationMethod.BearerToken || result.Variables["INPUT"] == AuthenticationMethod.BasicAuth)
-                    {
-                        projectProperty.ApiEndpoint.AuthenticationMethod = result.Variables["INPUT"];
-                        success = true;
-                    }
-                }
-                catch (Exception)
-                {
-                    Console.WriteLine("Failed to get the authentication method. Retrying...");
-                }
-                retry++;
-            }
-
             // EXECUTE FUNCTION : Execute function to get the request body required when sending a request to the API
             if (projectProperty.ApiEndpoint.NeedRequestBody == true)
             {
@@ -186,35 +162,57 @@ namespace CodeGenerator.Services
                 result = await kernel.RunAsync(context, getRequestBodyFunction);
             }
 
-            // TESTING: Answer question
-            //var memoryList = new List<MemoryQueryResult>();
-            //var searchResults = kernel.Memory.SearchAsync("api-url-documentation", userInput.Prompt, 100);
+            // EXECUTE FUNCTION: Execute function to get the input of the application
+            var getInput = kernel.Skills.GetFunction("APICodeGenerator", "GetInput");
+            context.Set("question", $"What are the suitable application input parameters for this request: {userInput.Prompt}, to hit API URL {projectProperty.ApiEndpoint.Method} with {projectProperty.ApiEndpoint.Endpoint} method?");
+            success = false;
+            retry = 0;
 
-            //await foreach(var searchResult in searchResults)
-            //{
-            //    memoryList.Add(searchResult);
-            //}
+            while (!success && retry < 5)
+            {
+                try
+                {
+                    result = await kernel.RunAsync(context, getInput);
+                    projectProperty.Input = JsonSerializer.Deserialize<Dictionary<string, string>>(result.Variables["INPUT"], new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
 
-            //memoryList = memoryList.OrderByDescending(m => m.Relevance).ToList();
+                    string applicationInput = "Input parameters:";
 
-            // Modify execute method to implement the solution based on the requirement
-            //var updateMethodFunction = kernel.Skills.GetFunction("APICodeGenerator", "UpdateMethod");
-            //var extractFilePathAndContentFunction = kernel.Skills.GetFunction("CodeGenerator", "ExtractFilePathAndContent");
-            //var fileFunction = kernel.Skills.GetFunction("file", "Write");
+                    foreach(var dictionary in projectProperty.Input)
+                    {
+                        string key = dictionary.Key;
+                        string value = dictionary.Value;
 
-            //context.Set("path", Path.Combine(userInput.ProjectLocation, "Service.cs"));
+                        applicationInput = $"{applicationInput}\n" +
+                                            $"{key}: {value}";
+                    }
+
+                    context.Set("applicationInput", applicationInput);
+                    success = true;
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine("Failed to get the API method and endpoint. Retrying...");
+                }
+                retry++;
+            }
+
+            // EXECUTE FUNCTION: Execute function to update execute method
+            var updateMethodFunction = kernel.Skills.GetFunction("APICodeGenerator", "UpdateMethod");
+            var extractFilePathAndContentFunction = kernel.Skills.GetFunction("CodeGenerator", "ExtractFilePathAndContent");
+            var fileFunction = kernel.Skills.GetFunction("file", "Write");
+
+            context.Set("path", Path.Combine(userInput.ProjectLocation, "Service.cs"));
             context.Set("prompt", userInput.Prompt);
-            //context.Set("apiUrl", apiUrl);
+            context.Set("endpoint", $"{projectProperty.ApiEndpoint.Method} {projectProperty.ApiEndpoint.Endpoint}");
 
-            //var result = await kernel.RunAsync(context, answerQuestionFunction);
-            //var result = await kernel.RunAsync(context, updateMethodFunction, extractFilePathAndContentFunction, fileFunction);
+            result = await kernel.RunAsync(context, updateMethodFunction, extractFilePathAndContentFunction, fileFunction);
 
-            // Update csproj file to add some package reference if needed
+            // EXECUTE FUNCTION: Execute function to Update csproj file to add some package reference if needed
             var generateCsprojFunction = kernel.Skills.GetFunction("APICodeGenerator", "UpdateReference");
-            //context = new ContextVariables(result.Variables["input"]);
+            context.Set("snippet", result.Variables["input"]);
             context.Set("path", Path.Combine(userInput.ProjectLocation, $"{userInput.ProjectName}.csproj"));
 
-            //result = await kernel.RunAsync(context, generateCsprojFunction, extractFilePathAndContentFunction, fileFunction);
+            result = await kernel.RunAsync(context, generateCsprojFunction, extractFilePathAndContentFunction, fileFunction);
         }
 
         private static async Task InsertDocumentationToMemory(IKernel kernel, string documentationContent)

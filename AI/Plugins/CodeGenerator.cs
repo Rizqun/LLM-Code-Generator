@@ -40,7 +40,7 @@ namespace CodeGenerator.AI.Plugins
             }
 
             // delete the file first so it can write from clean slate
-            //File.Delete(context["path"]);
+            File.Delete(context.Variables["path"]);
 
             return context.Variables["content"];
         }

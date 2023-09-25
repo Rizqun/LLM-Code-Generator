@@ -17,8 +17,13 @@
         "defaultValue": ""
       },
       {
-        "name": "apiUrl",
-        "description": "Api URL.",
+        "name": "endpoint",
+        "description": "Api URL endpoint.",
+        "defaultValue": ""
+      },
+      {
+        "name": "applicationInput",
+        "description": "All required input from user in the created application.",
         "defaultValue": ""
       }
     ]
