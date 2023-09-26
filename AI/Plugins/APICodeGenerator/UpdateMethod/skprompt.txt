@@ -1,16 +1,21 @@
-﻿We will generate code based on the user prompt below:
+﻿We have the following c# file:
+---
+{{file.Read $path}}
+---
+
+We will generate code based on the user prompt below:
 ---
 {{$prompt}}
-----
+---
 
 To achieve that, we will hit API endpoint below:
 ---
-{{$endpoint}}
+{{$appEndpoint}}
 ---
 
 We also need user to input the following parameters:
 ---
-{{$applicationInput}}
+{{$inputInformation}}
 ---
 
 Please complete the 'Public static async Task Execute' method to implement the solution based on the user prompt.

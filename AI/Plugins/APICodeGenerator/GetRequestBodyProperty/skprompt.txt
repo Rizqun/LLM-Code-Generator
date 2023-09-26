@@ -1,26 +1,41 @@
-﻿Based on the question below:
+﻿We will build a console application based on the following request:
 ---
-{{$question}}
+{{$prompt}}
 ---
 
-And the information below:
+We need to determine the request body that will be used to hit the API URL below:
 ---
-{{recall $question}}
-----
+{{$appEndpoint}}
+---
 
-Please return a JSON array that contains property in request body. Please DO NOT insert all possible property, INCLUDE all of the REQUIRED properties, and for the optional property in request body, you can choose UP TO 2 properties. It is also OK if you don't want to include OPTIONAL property in the JSON array.
-Please return the JSON array without any opening or closing words.
+We also have some snippet from API documentation that might be useful:
+---
+{{$appSnippet}}
+---
 
-Below is the example of returned JSON array:
+Please determine the request body and return in JSON Array format without any opening or closing words.
+Don't assign all available properties to the JSON Array, please just include all of the REQUIRED properties to the JSON Array, and for the optional property in request body, you can ONLY add 1 to the JSON Array.
+
+The JSON Array must be in this format:
+[
+	{
+		"name": "property name",
+		"type": "property data type",
+		"isRequired": boolean value, either true or false
+	}
+]
+
+For example:
 [
 	{
 		"name": "property name 1",
-		"type": "the type data of property, like string, int, boolean, or other",
-		"isRequired": "set value to true if the property is required in request body, set value to false if the property is not required"
+		"type": "property data type",
+		"isRequired": true
 	},
 	{
 		"name": "property name 2",
-		"type": "the type data of property, like string, int, boolean, or other",
-		"isRequired": "set value to true if the property is required in request body, set value to false if the property is not required"
-	}
+		"type": "property data type",
+		"isRequired": false
+	},
+	...
 ]

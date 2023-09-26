@@ -22,6 +22,17 @@ namespace CodeGenerator.Services
             return targetFolder;
         }
 
+        public static void NormalizeCsprojFile(string path)
+        {
+            string content = File.ReadAllText(path);
+
+            if (!content.StartsWith("<Project"))
+            {
+                string modifiedContent = "<Project Sdk=\"Microsoft.NET.Sdk\">\n" + content + "\n</Project>";
+                File.WriteAllText(path, modifiedContent);
+            }
+        }
+
         private static async Task<string> CreateSolution(UserInput userInput)
         {
             if (File.Exists(Path.Combine(userInput.ProjectLocation, $"{userInput.ProjectName}.sln")))

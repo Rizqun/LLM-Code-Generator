@@ -1,7 +1,7 @@
 ﻿{
   "schema": 1,
   "type": "completion",
-  "description": "Update method inside class",
+  "description": "Get application input",
   "completion": {
     "max_tokens": 2048,
     "temperature": 0.0,
@@ -17,13 +17,13 @@
         "defaultValue": ""
       },
       {
-        "name": "appEndpoint",
-        "description": "Api URL endpoint.",
+        "name": "question",
+        "description": "The user's question.",
         "defaultValue": ""
       },
       {
-        "name": "inputInformation",
-        "description": "All required input from user in the created application.",
+        "name": "inputPrompt",
+        "description": "The final prompt to help get the application input.",
         "defaultValue": ""
       }
     ]

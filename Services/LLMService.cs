@@ -8,59 +8,12 @@ using Microsoft.SemanticKernel.Text;
 using Microsoft.SemanticKernel.Orchestration;
 using CodeGenerator.Constants;
 using Microsoft.SemanticKernel.Connectors.Memory.Qdrant;
-using CodeGenerator.Models.Response;
-using Spectre.Console;
-using System.Collections;
+using System.Text;
 
 namespace CodeGenerator.Services
 {
     public static class LLMService
     {
-        public static async Task DefineProjectProperties(string prompt, string documentationContent, OpenAIConfig openAIConfig)
-        {
-            // Set up kernels
-            var builder = new KernelBuilder();
-
-            // Using OpenAI
-            builder.WithOpenAITextEmbeddingGenerationService("text-embedding-ada-002", openAIConfig.Key);
-            builder.WithOpenAIChatCompletionService(openAIConfig.Model, openAIConfig.Key);
-            builder.WithMemoryStorage(new VolatileMemoryStore());
-            IKernel kernel = builder.Build();
-
-            var lines = TextChunker.SplitPlainTextLines(documentationContent, 30);
-            var paragraphs = TextChunker.SplitPlainTextParagraphs(lines, 100);
-
-            foreach( var paragraph in paragraphs )
-            {
-                await kernel.Memory.SaveInformationAsync(
-                    collection: "Documentation",
-                    text: paragraph,
-                    id: Guid.NewGuid().ToString()
-                );
-            }
-
-            var context = kernel.CreateNewContext();
-            context.Variables.Set("input", prompt);
-            context.Variables[TextMemorySkill.CollectionParam] = "Documentation";
-
-            var pluginsDirectory = Path.Combine(Directory.GetCurrentDirectory(), "AI", "Plugins");
-
-            // Import TextMemorySkill to the kernel so we can use 'recall' function in the skprompt.txt file
-            // recall is used so it can h
-            kernel.ImportSkill(new TextMemorySkill(kernel.Memory));
-            kernel.ImportSemanticSkillFromDirectory(pluginsDirectory, "CodeGenerator");
-
-            var result = await kernel.RunAsync(context.Variables, kernel.Skills.GetFunction("CodeGenerator", "GenerateCode"));
-
-            string request = result.Variables["input"];
-
-            var projectProperty = JsonSerializer.Deserialize<ProjectProperty>(request, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-            });
-
-        }
-
         public static async Task GenerateCode(UserInput userInput, OpenAIConfig openAIConfig, string requirement, string purpose, QdrantConfig? qdrantConfig = null)
         {
             // Set up kernels
@@ -125,13 +78,15 @@ namespace CodeGenerator.Services
             kernel.ImportSkill(new TextMemorySkill(kernel.Memory));
             kernel.ImportSemanticSkillFromDirectory(pluginsDirectory, "APICodeGenerator");
 
-            // EXECUTE FUNCTION : Execute function to get API method and endpoint URL
+            // EXECUTE FUNCTION : Execute function to get API method and API endpoint URL
             var context = new ContextVariables();
             var projectProperty = new ProjectProperty();
             
             var getMethodAndEndpointFunction = kernel.Skills.GetFunction("APICodeGenerator", "GetMethodAndEndpoint");
+            var cleanUpAIResponseFunction = kernel.Skills.GetFunction("CodeGenerator", "CleanUpAIResponse");
             context.Set(TextMemorySkill.CollectionParam, "api-url-documentation");
             context.Set(TextMemorySkill.RelevanceParam, "0.8");
+            context.Set("prompt", userInput.Prompt);
             context.Set("question", $"What is the API method and endpoint for this request: {userInput.Prompt}?");
             var result = new SKContext();
             var success = false;
@@ -143,82 +98,84 @@ namespace CodeGenerator.Services
                 {
                     result = await kernel.RunAsync(context, getMethodAndEndpointFunction);
                     projectProperty.ApiEndpoint = JsonSerializer.Deserialize<APIEndpoint>(result.Variables["INPUT"], new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+                    context.Set("appEndpoint", $"{projectProperty.ApiEndpoint.Method} {projectProperty.ApiEndpoint.Endpoint}");
 
                     success = true;
                 }
                 catch (Exception)
                 {
                     Console.WriteLine("Failed to get the API method and endpoint. Retrying...");
+                    Thread.Sleep(2000);
                 }
                 retry++;
             }
 
-            // EXECUTE FUNCTION : Execute function to get the request body required when sending a request to the API
             if (projectProperty.ApiEndpoint.NeedRequestBody == true)
             {
+                var appSnippet = await GetSnippets(kernel, $"What are the request body for the following request: \n---\n{userInput.Prompt}\n---\nto hit {projectProperty.ApiEndpoint.Endpoint} using {projectProperty.ApiEndpoint.Method} method?", 3);
+
+                // EXECUTE FUNCTION : Execute function to get the request body required when sending a request to the API
                 var getRequestBodyFunction = kernel.Skills.GetFunction("APICodeGenerator", "GetRequestBodyProperty");
-                context.Set("question", $"What are the request body for this request: {userInput.Prompt}, using the {projectProperty.ApiEndpoint.Method} method to hit {projectProperty.ApiEndpoint.Endpoint}?");
+                context.Set("appSnippet", appSnippet);
+                context.Set("fileType", FileType.JSON);
 
-                result = await kernel.RunAsync(context, getRequestBodyFunction);
+                result = await kernel.RunAsync(context, getRequestBodyFunction, cleanUpAIResponseFunction);
+                context.Set("appRequestBody", result.Variables["INPUT"]);
+
+                Console.WriteLine(context["appRequestBody"]);
+                success = true;
             }
-
             // EXECUTE FUNCTION: Execute function to get the input of the application
-            var getInput = kernel.Skills.GetFunction("APICodeGenerator", "GetInput");
+            var generatePromptToGetInputFunction = kernel.Skills.GetFunction("CodeGenerator", "GeneratePromptToGetInput");
+            var getApplicationInputFunction = kernel.Skills.GetFunction("APICodeGenerator", "GetApplicationInput");
             context.Set("question", $"What are the suitable application input parameters for this request: {userInput.Prompt}, to hit API URL {projectProperty.ApiEndpoint.Method} with {projectProperty.ApiEndpoint.Endpoint} method?");
-            success = false;
-            retry = 0;
 
-            while (!success && retry < 5)
+            result = await kernel.RunAsync(context, generatePromptToGetInputFunction, getApplicationInputFunction);
+            try
             {
-                try
+                projectProperty.Input = JsonSerializer.Deserialize<Dictionary<string, string>>(result.Variables["INPUT"], new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+                string inputInformation = "Input parameters:";
+
+                foreach (var dictionary in projectProperty.Input)
                 {
-                    result = await kernel.RunAsync(context, getInput);
-                    projectProperty.Input = JsonSerializer.Deserialize<Dictionary<string, string>>(result.Variables["INPUT"], new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+                    string key = dictionary.Key;
+                    string value = dictionary.Value;
 
-                    string applicationInput = "Input parameters:";
-
-                    foreach(var dictionary in projectProperty.Input)
-                    {
-                        string key = dictionary.Key;
-                        string value = dictionary.Value;
-
-                        applicationInput = $"{applicationInput}\n" +
-                                            $"{key}: {value}";
-                    }
-
-                    context.Set("applicationInput", applicationInput);
-                    success = true;
+                    inputInformation = $"{inputInformation}\n" +
+                                        $"{key}: {value}";
                 }
-                catch (Exception)
-                {
-                    Console.WriteLine("Failed to get the API method and endpoint. Retrying...");
-                }
-                retry++;
+
+                context.Set("inputInformation", inputInformation);
             }
+            catch (Exception)
+            {
+                context.Set("inputInformation", result.Variables["INPUT"]);
+            }
+
+            Console.WriteLine(context["inputInformation"]);
 
             // EXECUTE FUNCTION: Execute function to update execute method
             var updateMethodFunction = kernel.Skills.GetFunction("APICodeGenerator", "UpdateMethod");
-            var extractFilePathAndContentFunction = kernel.Skills.GetFunction("CodeGenerator", "ExtractFilePathAndContent");
             var fileFunction = kernel.Skills.GetFunction("file", "Write");
-
+            context.Set("fileType", FileType.CSharp);
             context.Set("path", Path.Combine(userInput.ProjectLocation, "Service.cs"));
-            context.Set("prompt", userInput.Prompt);
-            context.Set("endpoint", $"{projectProperty.ApiEndpoint.Method} {projectProperty.ApiEndpoint.Endpoint}");
-
-            result = await kernel.RunAsync(context, updateMethodFunction, extractFilePathAndContentFunction, fileFunction);
+            result = await kernel.RunAsync(context, updateMethodFunction, cleanUpAIResponseFunction, fileFunction);
 
             // EXECUTE FUNCTION: Execute function to Update csproj file to add some package reference if needed
             var generateCsprojFunction = kernel.Skills.GetFunction("APICodeGenerator", "UpdateReference");
-            context.Set("snippet", result.Variables["input"]);
+            context.Set("fileType", FileType.XML);
+            context.Set("code", result.Variables["input"][..Math.Min(1000, result.Variables["input"].Length - 1)]);
             context.Set("path", Path.Combine(userInput.ProjectLocation, $"{userInput.ProjectName}.csproj"));
 
-            result = await kernel.RunAsync(context, generateCsprojFunction, extractFilePathAndContentFunction, fileFunction);
+            result = await kernel.RunAsync(context, generateCsprojFunction, cleanUpAIResponseFunction, fileFunction);
+
+            ProjectGeneratorService.NormalizeCsprojFile(Path.Combine(userInput.ProjectLocation, $"{userInput.ProjectName}.csproj"));
         }
 
         private static async Task InsertDocumentationToMemory(IKernel kernel, string documentationContent)
         {
             var lines = TextChunker.SplitPlainTextLines(documentationContent, 100);
-            var paragraphs = TextChunker.SplitPlainTextParagraphs(lines, 800);
+            var paragraphs = TextChunker.SplitPlainTextParagraphs(lines, 500);
 
             foreach (var paragraph in paragraphs)
             {
@@ -228,6 +185,24 @@ namespace CodeGenerator.Services
                     id: Guid.NewGuid().ToString()
                 );
             }
+        }
+
+        private static async Task<string> GetSnippets(IKernel kernel, string query, int limit = 1, double minRelevanceScore = 0.7)
+        {
+            StringBuilder sb = new StringBuilder();
+            int count = 0;
+
+            var searchResults = kernel.Memory.SearchAsync("api-url-documentation", query, limit, minRelevanceScore);
+
+            await foreach (var searchResult in searchResults)
+            {
+                sb.AppendLine($"Document snippet {count}:");
+                sb.AppendLine(searchResult.Metadata.Text);
+
+                count++;
+            }
+
+            return sb.ToString();
         }
     }
 }

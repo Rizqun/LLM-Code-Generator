@@ -5,12 +5,12 @@
 
 And we also have this code snippet of a c# class that list the usings:
 ---
-{{$snippet}}
+{{$code}}
 ---
 
-Please output the modifed csproj that includes the necessary package reference based on the usings. Please don't ommit anything from the original.
-Please insert the reference inside the project root: <Project Sdk="Microsoft.NET.Sdk">
+Please return the modifed csproj that includes the necessary package reference based on the usings.
+Please don't ommit anything from the original.
 Please only output the csproj without opening and closing statement.
 If it doesn't need added package reference, please just return the original csproj.
-Please don't remove Project Root that contain Sdk attribute.
+PLEASE DON'T REMOVE Project Root that contain Sdk attribute.
 The csproj file only contain valid xml tag, please remove any invalid xml tag inside it.

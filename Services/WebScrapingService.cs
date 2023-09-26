@@ -13,7 +13,7 @@ namespace CodeGenerator.Services
 
             foreach(var url in urls)
             {
-                result = $"\n\n{ScrapeAndCleanData(url)}";
+                result += $"\n\n{ScrapeAndCleanData(url)}";
             }
 
             return result;
@@ -25,22 +25,27 @@ namespace CodeGenerator.Services
             var web = new HtmlWeb();
             var doc = web.Load(url);
 
-            // Get specific content related to API URL from scrapped content
-            var apiUrlNodes = doc.DocumentNode.Descendants()
-                            .Where(node => node.Name == "body")
-                            .ToList();
+            var element = doc.GetElementbyId("get-a-repository");
+
+            // Remove all unused nodes
+            List<string> wordsToRemove = new List<string> { "nav", "button", "header", "footer", "sidebar", "script" };
+
+            doc.DocumentNode.Descendants()
+                .Where(node => wordsToRemove.Any(word => node.Name.ToLower().Contains(word.ToLower())))
+                .ToList()
+                .ForEach(node => node.Remove());
+
+            // Get body element without all unused nodes
+            var bodyElement = doc.DocumentNode.Descendants("body").FirstOrDefault();
 
             // Get text from selected nodes (so the html tag will not included) 
-            if (apiUrlNodes != null)
+            if (bodyElement != null)
             {
                 var cleanedData = new List<string>();
 
-                foreach (var apiUrlNode in apiUrlNodes)
-                {
-                    var rawText = apiUrlNode.InnerText;
-                    var cleanedText = CleanData(rawText);
-                    cleanedData.Add(cleanedText);
-                }
+                var rawText = bodyElement.InnerText;
+                var cleanedText = CleanData(rawText);
+                cleanedData.Add(cleanedText);
 
                 return string.Join("\n", cleanedData);
             }

@@ -1,7 +1,10 @@
-﻿using Microsoft.SemanticKernel;
+﻿using CodeGenerator.Constants;
+using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Orchestration;
 using Microsoft.SemanticKernel.SkillDefinition;
+using Microsoft.VisualBasic.FileIO;
 using System.ComponentModel;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace CodeGenerator.AI.Plugins
@@ -15,34 +18,49 @@ namespace CodeGenerator.AI.Plugins
             _kernel = kernel;
         }
 
-        [SKFunction, Description("Add the output from previous function to the 'content' context variable")]
-        public string ExtractFilePathAndContent(SKContext context)
+        [SKFunction, Description("Get the final prompt used to get the input")]
+        public string GeneratePromptToGetInput(SKContext context)
         {
-            context.Variables["content"] = context.Variables["input"];
+            var appEndpoint = context.Variables["appEndpoint"];
+            var appRequestBody = string.Empty;
 
-            var fileType = "csharp";
+            if (context.Variables.ContainsKey("appRequestBody"))
+                appRequestBody = context.Variables["appRequestBody"];
 
-            if (context.Variables["path"].EndsWith("csproj"))
+            var sb = new StringBuilder();
+
+            sb.AppendLine("The application will hit the API endpoint below:");
+            sb.AppendLine($"---\n{appEndpoint}\n---");
+
+            if (!string.IsNullOrEmpty(appRequestBody))
             {
-                fileType = "xml";
+                sb.AppendLine("\nWe have the following request body:");
+                sb.AppendLine($"---\n{appRequestBody}\n---");
             }
 
+            context.Variables.Set("inputPrompt", sb.ToString());
+
+            return context.Variables["inputPrompt"];
+        }
+
+        [SKFunction, Description("Clean up response from AI")]
+        public string CleanUpAIResponse(SKContext context)
+        {
+            string fileType = context.Variables["fileType"];
             string pattern = @$"```{fileType}\s*(.*?)```";
-            Match match = Regex.Match(context.Variables["input"], pattern, RegexOptions.Singleline);
+            Match match = Regex.Match(context.Variables["INPUT"], pattern, RegexOptions.Singleline);
 
             if (match.Success)
             {
-                context.Variables["content"] = match.Groups[1].Value.Trim();
-            }
-            else
-            {
-                context.Variables["content"] = context.Variables["input"];
+                context.Variables.Set("INPUT", match.Groups[1].Value.Trim());
             }
 
-            // delete the file first so it can write from clean slate
-            File.Delete(context.Variables["path"]);
+            context.Variables["content"] = context.Variables["INPUT"];
 
-            return context.Variables["content"];
+            if (context.Variables.ContainsKey("path"))
+                File.Delete(context.Variables["path"]);
+
+            return context.Variables["INPUT"];
         }
     }
 }

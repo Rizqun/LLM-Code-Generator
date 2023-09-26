@@ -1,0 +1,26 @@
+﻿Based on the request below:
+---
+{{$prompt}}
+---
+
+And the information below:
+---
+{{recall $question}}
+---
+
+{{$inputPrompt}}
+
+Please return an input in JSON format without any opening or closing words. 
+You must also add the way for user to authenticate to be able to hit the API url to the input. 
+For example, if access token is required to make a request to the API, you must add access token as an input.
+The JSON must be in this format:
+{
+	"inputName": "data type of the input"
+}
+
+For example:
+{
+	"input1": "data type of input 1",
+	"input2": "data type of input 2",
+	...
+}
