@@ -24,14 +24,14 @@
 
   <ItemGroup>
 	  <Compile Remove="AI\Plugins\APICodeGenerator\**" />
-	  <Compile Remove="AI\Plugins\JiraCodeGenerator\**" />
+	  <Compile Remove="AI\Plugins\FileGenerator\**" />
   </ItemGroup>
 
   <ItemGroup>
 	  <Content Include="AI\Plugins\APICodeGenerator\**">
 		 <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </Content>
-	  <Content Include="AI\Plugins\JiraCodeGenerator\**">
+	  <Content Include="AI\Plugins\FileGenerator\**">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </Content>
   </ItemGroup>
@@ -53,27 +53,14 @@
 	  <None Remove="AI\Plugins\APICodeGenerator\GetMethodAndEndpoint\skprompt.txt" />
 	  <None Remove="AI\Plugins\APICodeGenerator\GetRequestBodyProperty\config.json" />
 	  <None Remove="AI\Plugins\APICodeGenerator\GetRequestBodyProperty\skprompt.txt" />
-	  <None Remove="AI\Plugins\JiraCodeGenerator\UpdateMethod\config.json" />
-	  <None Remove="AI\Plugins\JiraCodeGenerator\UpdateMethod\skprompt.txt" />
-	  <None Remove="AI\Plugins\JiraCodeGenerator\UpdateReference\config.json" />
-	  <None Remove="AI\Plugins\JiraCodeGenerator\UpdateReference\skprompt.txt" />
-	  <None Remove="AI\Plugins\APICodeGenerator\UpdateMethod\config.json" />
-	  <None Remove="AI\Plugins\APICodeGenerator\UpdateMethod\skprompt.txt" />
-	  <None Remove="AI\Plugins\APICodeGenerator\UpdateReference\config.json" />
-	  <None Remove="AI\Plugins\APICodeGenerator\UpdateReference\skprompt.txt" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Content Include="AI\Plugins\JiraCodeGenerator\GenerateCode\config.json" />
-	  <Content Include="AI\Plugins\JiraCodeGenerator\GenerateCode\skprompt.txt" />
-	  <Content Include="AI\Plugins\JiraCodeGenerator\UpdateMethod\config.json" />
-	  <Content Include="AI\Plugins\JiraCodeGenerator\UpdateMethod\skprompt.txt" />
-	  <Content Include="AI\Plugins\JiraCodeGenerator\UpdateReference\config.json" />
-	  <Content Include="AI\Plugins\JiraCodeGenerator\UpdateReference\skprompt.txt" />
-      <Content Include="AI\Plugins\APICodeGenerator\UpdateMethod\config.json" />
-	  <Content Include="AI\Plugins\APICodeGenerator\UpdateMethod\skprompt.txt" />
-	  <Content Include="AI\Plugins\APICodeGenerator\UpdateReference\config.json" />
-	  <Content Include="AI\Plugins\APICodeGenerator\UpdateReference\skprompt.txt" />
+	  <None Remove="AI\Plugins\FileGenerator\UpdateMethodWithAPI\config.json" />
+	  <None Remove="AI\Plugins\FileGenerator\UpdateMethodWithAPI\skprompt.txt" />
+	  <None Remove="AI\Plugins\FileGenerator\UpdateMethodWithJira\config.json" />
+	  <None Remove="AI\Plugins\FileGenerator\UpdateMethodWithJira\skprompt.txt" />
+	  <None Remove="AI\Plugins\FileGenerator\UpdateMethodWithAPIAndJira\config.json" />
+	  <None Remove="AI\Plugins\FileGenerator\UpdateMethodWithAPIAndJira\skprompt.txt" />
+	  <None Remove="AI\Plugins\FileGenerator\UpdateReference\config.json" />
+	  <None Remove="AI\Plugins\FileGenerator\UpdateReference\skprompt.txt" />
 	</ItemGroup>
 
 </Project>

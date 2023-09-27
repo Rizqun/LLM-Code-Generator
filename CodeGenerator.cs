@@ -20,24 +20,24 @@ namespace CodeGenerator
             // Get OpenAI information and insert to OpenAI config
             var openAIConfig = new OpenAIConfig()
             {
-                Model = _configuration["OpenAI:Model"],
-                Embedding = _configuration["OpenAI:Embedding"],
-                Key = _configuration["OpenAI:Key"]
+                Model = _configuration["OpenAI:Model"]!,
+                Embedding = _configuration["OpenAI:Embedding"]!,
+                Key = _configuration["OpenAI:Key"]!
             };
 
             // Get Jira information and insert to Jira config
             var jiraConfig = new JiraConfig()
             {
-                Organization = _configuration["Jira:Organization"],
-                Username = _configuration["Jira:Username"],
-                Key = _configuration["Jira:Key"]
+                Organization = _configuration["Jira:Organization"]!,
+                Username = _configuration["Jira:Username"]!,
+                Key = _configuration["Jira:Key"]!
             };
 
             // Get Qdrant information and insert to Qdrant config
             var qdrantConfig = new QdrantConfig()
             {
-                Host = _configuration["Qdrant:Host"],
-                Key = _configuration["Qdrant:Key"]
+                Host = _configuration["Qdrant:Host"]!,
+                Key = _configuration["Qdrant:Key"]!
             };
 
             var userInput = new UserInput();
@@ -57,38 +57,42 @@ namespace CodeGenerator
             if (purpose != Purpose.UpdateSolution)
             {
                 Console.WriteLine("Prompt: ");
-                userInput.Prompt = Console.ReadLine();
+                userInput.Prompt = Console.ReadLine()!;
                 if (purpose != Purpose.GenerateFromAPI)
                 {
                     Console.WriteLine("Jira Issue Key: ");
-                    userInput.JiraIssueKey = Console.ReadLine();
+                    userInput.JiraIssueKey = Console.ReadLine()!;
                 }
                 if (purpose != Purpose.GenerateFromJira)
                 {
                     Console.WriteLine("API Documentation URL: ");
-                    userInput.APIDocumentationURL = Console.ReadLine();
+                    userInput.APIDocumentationURL = Console.ReadLine()!;
                 }
                 Console.WriteLine("Project Name: ");
-                userInput.ProjectName = Console.ReadLine();
+                userInput.ProjectName = Console.ReadLine()!;
                 Console.WriteLine("Project Location: ");
-                userInput.ProjectLocation = Console.ReadLine();
+                userInput.ProjectLocation = Console.ReadLine()!;
             }
             else
             {
                 // TODO: define inputs for update solution
             }
 
+            var requirement = string.Empty;
+
+            if (!string.IsNullOrEmpty(userInput.JiraIssueKey))
+                requirement = await JiraService.GetJiraIssueDetails(jiraConfig, userInput);
+
             if (string.IsNullOrEmpty(userInput.APIDocumentationURL))
             {
                 await ProjectGeneratorService.Create(userInput);
-                var requirement = await JiraService.GetJiraIssueDetails(jiraConfig, userInput);
-                await LLMService.GenerateCode(userInput, openAIConfig, requirement, purpose);
+                await LLMService.GenerateCode(userInput, openAIConfig, purpose, requirement);
             }
             else
             {
                 await ProjectGeneratorService.Create(userInput);
-                var apiUrl = await WebScrapingService.GetWebContent(userInput.APIDocumentationURL);
-                await LLMService.GenerateCode(userInput, openAIConfig, apiUrl, purpose, qdrantConfig);
+                var webContent = await WebScrapingService.GetWebContent(userInput.APIDocumentationURL);
+                await LLMService.GenerateCode(userInput, openAIConfig, purpose, !string.IsNullOrEmpty(requirement) ? requirement : null, webContent, qdrantConfig);
             }
         }
     }

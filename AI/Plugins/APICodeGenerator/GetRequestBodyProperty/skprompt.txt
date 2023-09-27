@@ -14,7 +14,8 @@ We also have some snippet from API documentation that might be useful:
 ---
 
 Please determine the request body and return in JSON Array format without any opening or closing words.
-Don't assign all available properties to the JSON Array, please just include all of the REQUIRED properties to the JSON Array, and for the optional property in request body, you can ONLY add 1 to the JSON Array.
+Please add all of the REQUIRED properties to the JSON Array.
+Please only add the optional property that you think important to the JSON Array, or don't add any optional property at all to the JSON Array.
 
 The JSON Array must be in this format:
 [

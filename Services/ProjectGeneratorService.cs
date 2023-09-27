@@ -25,6 +25,8 @@ namespace CodeGenerator.Services
         public static void NormalizeCsprojFile(string path)
         {
             string content = File.ReadAllText(path);
+            content = content.Trim();
+            content = content.Replace("Version=\"5.0.0\"", "Version=\"2.0.0\"");
 
             if (!content.StartsWith("<Project"))
             {

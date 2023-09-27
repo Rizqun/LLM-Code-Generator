@@ -23,9 +23,12 @@ namespace CodeGenerator.Services
         {
             // Scrape web content
             var web = new HtmlWeb();
+            web.PreRequest = (request) =>
+            {
+                request.Timeout = 300000;
+                return true;
+            };
             var doc = web.Load(url);
-
-            var element = doc.GetElementbyId("get-a-repository");
 
             // Remove all unused nodes
             List<string> wordsToRemove = new List<string> { "nav", "button", "header", "footer", "sidebar", "script" };
