@@ -178,7 +178,7 @@ namespace CodeGenerator.Services
         private static async Task<string> GetSnippets(IKernel kernel, string collectionName, string query, int limit = 1, double minRelevanceScore = 0.7)
         {
             StringBuilder sb = new StringBuilder();
-            int count = 0;
+            int count = 1;
 
             var searchResults = kernel.Memory.SearchAsync(collectionName, query, limit, minRelevanceScore);
 
