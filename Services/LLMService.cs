@@ -9,44 +9,34 @@ using Microsoft.SemanticKernel.Orchestration;
 using CodeGenerator.Constants;
 using Microsoft.SemanticKernel.Connectors.Memory.Qdrant;
 using System.Text;
+using Microsoft.Extensions.Configuration;
 
 namespace CodeGenerator.Services
 {
-    public static class LLMService
+    public class LLMService
     {
-        public static async Task GenerateCode(UserInput userInput, OpenAIConfig openAIConfig, string purpose, string? requirement = null, string? webContent = null, QdrantConfig? qdrantConfig = null)
+        private IKernel _kernel;
+        private IConfiguration _configuration;
+
+        public LLMService(IKernel kernel, IConfiguration configuration)
         {
-            // Set up kernels
-            var builder = new KernelBuilder();
-
-            // Using OpenAI
-            builder.WithOpenAIChatCompletionService(openAIConfig.Model, openAIConfig.Key);
-            builder.WithOpenAITextEmbeddingGenerationService(openAIConfig.Embedding, openAIConfig.Key); // It is required if using qdrant
-
-            // Build kernel
-            IKernel kernel = builder.Build();
-
-            // Import generic skill to be used
-            kernel.ImportSkill(new FileIOSkill(), "file");
-            kernel.ImportSkill(new AI.Plugins.CodeGenerator(kernel), nameof(AI.Plugins.CodeGenerator));
-
-            if (purpose == Purpose.GenerateFromJira)
-                await GenerateFromJira(kernel, userInput, requirement!);
-            else if (purpose == Purpose.GenerateFromAPI)
-                await GenerateFromAPI(kernel, userInput, webContent!, qdrantConfig!, requirement);
+            _kernel = kernel;
+            _configuration = configuration;
         }
 
-        public static async Task GenerateFromJira(IKernel kernel, UserInput userInput, string requirement)
+        public async Task GenerateFromJira(UserInput userInput, string requirement)
         {
-            // Import skill related to JIRA
+            // Import required skills
             var pluginsDirectory = Path.Combine(Directory.GetCurrentDirectory(), "AI", "Plugins");
-            kernel.ImportSemanticSkillFromDirectory(pluginsDirectory, "JiraCodeGenerator");
-            kernel.ImportSemanticSkillFromDirectory(pluginsDirectory, "FileGenerator");
+            _kernel.ImportSkill(new FileIOSkill(), "file");
+            _kernel.ImportSkill(new AI.Plugins.CodeGenerator(_kernel), nameof(AI.Plugins.CodeGenerator));
+            _kernel.ImportSemanticSkillFromDirectory(pluginsDirectory, "JiraCodeGenerator");
+            _kernel.ImportSemanticSkillFromDirectory(pluginsDirectory, "FileGenerator");
 
             // Modify execute method to implement the solution based on the requirement
-            var updateMethodFunction = kernel.Skills.GetFunction("FileGenerator", "UpdateMethodWithJira");
-            var cleanUpAIResponseFunction = kernel.Skills.GetFunction("CodeGenerator", "CleanUpAIResponse");
-            var fileFunction = kernel.Skills.GetFunction("file", "Write");
+            var updateMethodFunction = _kernel.Skills.GetFunction("FileGenerator", "UpdateMethodWithJira");
+            var cleanUpAIResponseFunction = _kernel.Skills.GetFunction("CodeGenerator", "CleanUpAIResponse");
+            var fileFunction = _kernel.Skills.GetFunction("file", "Write");
 
             var context = new ContextVariables();
             context.Set("path", Path.Combine(userInput.ProjectLocation, "Service.cs"));
@@ -54,45 +44,37 @@ namespace CodeGenerator.Services
             context.Set("prompt", userInput.Prompt);
             context.Set("requirement", requirement);
 
-            var result = await kernel.RunAsync(context, updateMethodFunction, cleanUpAIResponseFunction, fileFunction);
+            var result = await _kernel.RunAsync(context, updateMethodFunction, cleanUpAIResponseFunction, fileFunction);
 
             // Update csproj file to add some package reference if needed
-            var generateCsprojFunction = kernel.Skills.GetFunction("FileGenerator", "UpdateReference");
+            var generateCsprojFunction = _kernel.Skills.GetFunction("FileGenerator", "UpdateReference");
             context.Set("fileType", FileType.XML);
             context.Set("code", result.Variables["input"][..Math.Min(500, result.Variables["input"].Length - 1)]);
             context.Set("path", Path.Combine(userInput.ProjectLocation, $"{userInput.ProjectName}.csproj"));
 
-            result = await kernel.RunAsync(context, generateCsprojFunction, cleanUpAIResponseFunction, fileFunction);
+            result = await _kernel.RunAsync(context, generateCsprojFunction, cleanUpAIResponseFunction, fileFunction);
 
             ProjectGeneratorService.NormalizeCsprojFile(Path.Combine(userInput.ProjectLocation, $"{userInput.ProjectName}.csproj"));
         }
 
-        public static async Task GenerateFromAPI(IKernel kernel, UserInput userInput, string documentationContent, QdrantConfig qdrantConfig, string? requirement = null)
+        public async Task GenerateFromAPI(UserInput userInput, QdrantConfig qdrantConfig, string? requirement = null)
         {
-            // Using Qdrant
-            HttpClient httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Add("api-key", qdrantConfig.Key);
-            httpClient.BaseAddress = new Uri(qdrantConfig.Host);
-            kernel.UseMemory(new QdrantMemoryStore(httpClient, 1536));
-
-            // Insert documentation content to memory
-            await InsertDocumentationToMemory(kernel, documentationContent);
-
-            // Import skill related to API Url
+            // Import required skills
             var pluginsDirectory = Path.Combine(Directory.GetCurrentDirectory(), "AI", "Plugins");
-            kernel.ImportSkill(new TextMemorySkill(kernel.Memory));
-            kernel.ImportSemanticSkillFromDirectory(pluginsDirectory, "APICodeGenerator");
-            kernel.ImportSemanticSkillFromDirectory(pluginsDirectory, "FileGenerator");
+            _kernel.ImportSkill(new TextMemorySkill(_kernel.Memory));
+            _kernel.ImportSkill(new FileIOSkill(), "file");
+            _kernel.ImportSkill(new AI.Plugins.CodeGenerator(_kernel), nameof(AI.Plugins.CodeGenerator));
+            _kernel.ImportSemanticSkillFromDirectory(pluginsDirectory, "APICodeGenerator");
+            _kernel.ImportSemanticSkillFromDirectory(pluginsDirectory, "FileGenerator");
 
             // EXECUTE FUNCTION : Execute function to get API method and API endpoint URL
             var context = new ContextVariables();
             var projectProperty = new ProjectProperty();
             
-            var getMethodAndEndpointFunction = kernel.Skills.GetFunction("APICodeGenerator", "GetMethodAndEndpoint");
-            var cleanUpAIResponseFunction = kernel.Skills.GetFunction("CodeGenerator", "CleanUpAIResponse");
-            var fileFunction = kernel.Skills.GetFunction("file", "Write");
+            var getMethodAndEndpointFunction = _kernel.Skills.GetFunction("APICodeGenerator", "GetMethodAndEndpoint");
+            var cleanUpAIResponseFunction = _kernel.Skills.GetFunction("CodeGenerator", "CleanUpAIResponse");
+            var fileFunction = _kernel.Skills.GetFunction("file", "Write");
             context.Set(TextMemorySkill.CollectionParam, "api-url-documentation");
-            context.Set(TextMemorySkill.RelevanceParam, "0.8");
             context.Set("prompt", userInput.Prompt);
             context.Set("question", $"What is the API method and endpoint for this request: {userInput.Prompt}?");
             var result = new SKContext();
@@ -103,7 +85,7 @@ namespace CodeGenerator.Services
             {
                 try
                 {
-                    result = await kernel.RunAsync(context, getMethodAndEndpointFunction);
+                    result = await _kernel.RunAsync(context, getMethodAndEndpointFunction);
                     projectProperty.ApiEndpoint = JsonSerializer.Deserialize<APIEndpoint>(result.Variables["INPUT"], new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
                     context.Set("appEndpoint", $"{projectProperty.ApiEndpoint.Method} {projectProperty.ApiEndpoint.Endpoint}");
 
@@ -117,28 +99,33 @@ namespace CodeGenerator.Services
                 retry++;
             }
 
-            if (string.IsNullOrEmpty(requirement)) {
+            if (string.IsNullOrEmpty(requirement)) 
+            {
                 if (projectProperty.ApiEndpoint.NeedRequestBody == true)
                 {
-                    var appSnippet = await GetSnippets(kernel, $"What are the request body for the following request: \n---\n{userInput.Prompt}\n---\nto hit {projectProperty.ApiEndpoint.Endpoint} using {projectProperty.ApiEndpoint.Method} method?", 3);
+                    var appSnippet = await GetSnippets(
+                        kernel: _kernel,
+                        collectionName: userInput.CollectionName,
+                        query: $"What are the request body for the following request: \n---\n{userInput.Prompt}\n---\nto hit {projectProperty.ApiEndpoint.Endpoint} using {projectProperty.ApiEndpoint.Method} method?",
+                        limit: 3);
 
                     // EXECUTE FUNCTION : Execute function to get the request body required when sending a request to the API
-                    var getRequestBodyFunction = kernel.Skills.GetFunction("APICodeGenerator", "GetRequestBodyProperty");
+                    var getRequestBodyFunction = _kernel.Skills.GetFunction("APICodeGenerator", "GetRequestBodyProperty");
                     context.Set("appSnippet", appSnippet);
                     context.Set("fileType", FileType.JSON);
 
-                    result = await kernel.RunAsync(context, getRequestBodyFunction, cleanUpAIResponseFunction);
+                    result = await _kernel.RunAsync(context, getRequestBodyFunction, cleanUpAIResponseFunction);
                     context.Set("appRequestBody", result.Variables["INPUT"]);
 
                     Console.WriteLine(context["appRequestBody"]);
                 }
 
                 // EXECUTE FUNCTION: Execute function to get the input of the application
-                var generatePromptToGetInputFunction = kernel.Skills.GetFunction("CodeGenerator", "GeneratePromptToGetInput");
-                var getApplicationInputFunction = kernel.Skills.GetFunction("APICodeGenerator", "GetApplicationInput");
+                var generatePromptToGetInputFunction = _kernel.Skills.GetFunction("CodeGenerator", "GeneratePromptToGetInput");
+                var getApplicationInputFunction = _kernel.Skills.GetFunction("APICodeGenerator", "GetApplicationInput");
                 context.Set("question", $"What are the suitable application input parameters for this request: {userInput.Prompt}, to hit API URL {projectProperty.ApiEndpoint.Method} with {projectProperty.ApiEndpoint.Endpoint} method?");
 
-                result = await kernel.RunAsync(context, generatePromptToGetInputFunction, getApplicationInputFunction);
+                result = await _kernel.RunAsync(context, generatePromptToGetInputFunction, getApplicationInputFunction);
                 try
                 {
                     projectProperty.Input = JsonSerializer.Deserialize<Dictionary<string, string>>(result.Variables["INPUT"], new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
@@ -163,59 +150,37 @@ namespace CodeGenerator.Services
                 Console.WriteLine(context["inputInformation"]);
 
                 // EXECUTE FUNCTION: Execute function to update execute method
-                var updateMethodFunction = kernel.Skills.GetFunction("FileGenerator", "UpdateMethodWithAPI");
+                var updateMethodFunction = _kernel.Skills.GetFunction("FileGenerator", "UpdateMethodWithAPI");
                 context.Set("fileType", FileType.CSharp);
                 context.Set("path", Path.Combine(userInput.ProjectLocation, "Service.cs"));
-                result = await kernel.RunAsync(context, updateMethodFunction, cleanUpAIResponseFunction, fileFunction);
+                result = await _kernel.RunAsync(context, updateMethodFunction, cleanUpAIResponseFunction, fileFunction);
             }
             else
             {
                 // EXECUTE FUNCTION: Execute function to update execute method
-                var updateMethodFunction = kernel.Skills.GetFunction("FileGenerator", "UpdateMethodWithAPIAndJira");
+                var updateMethodFunction = _kernel.Skills.GetFunction("FileGenerator", "UpdateMethodWithAPIAndJira");
                 context.Set("fileType", FileType.CSharp);
                 context.Set("path", Path.Combine(userInput.ProjectLocation, "Service.cs"));
-                result = await kernel.RunAsync(context, updateMethodFunction, cleanUpAIResponseFunction, fileFunction);
+                result = await _kernel.RunAsync(context, updateMethodFunction, cleanUpAIResponseFunction, fileFunction);
             }
 
             // EXECUTE FUNCTION: Execute function to Update csproj file to add some package reference if needed
-            var generateCsprojFunction = kernel.Skills.GetFunction("FileGenerator", "UpdateReference");
+            var generateCsprojFunction = _kernel.Skills.GetFunction("FileGenerator", "UpdateReference");
             context.Set("fileType", FileType.XML);
             context.Set("code", result.Variables["input"][..Math.Min(500, result.Variables["input"].Length - 1)]);
             context.Set("path", Path.Combine(userInput.ProjectLocation, $"{userInput.ProjectName}.csproj"));
 
-            result = await kernel.RunAsync(context, generateCsprojFunction, cleanUpAIResponseFunction, fileFunction);
+            result = await _kernel.RunAsync(context, generateCsprojFunction, cleanUpAIResponseFunction, fileFunction);
 
             ProjectGeneratorService.NormalizeCsprojFile(Path.Combine(userInput.ProjectLocation, $"{userInput.ProjectName}.csproj"));
         }
 
-        private static async Task InsertDocumentationToMemory(IKernel kernel, string documentationContent)
-        {
-            var lines = TextChunker.SplitPlainTextLines(documentationContent, 100);
-            var paragraphs = TextChunker.SplitPlainTextParagraphs(lines, 500);
-
-            foreach (var paragraph in paragraphs)
-            {
-                try
-                {
-                    await kernel.Memory.SaveInformationAsync(
-                        collection: "api-url-documentation",
-                        text: paragraph,
-                        id: Guid.NewGuid().ToString()
-                    );
-                }
-                catch(Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                }
-            }
-        }
-
-        private static async Task<string> GetSnippets(IKernel kernel, string query, int limit = 1, double minRelevanceScore = 0.7)
+        private static async Task<string> GetSnippets(IKernel kernel, string collectionName, string query, int limit = 1, double minRelevanceScore = 0.7)
         {
             StringBuilder sb = new StringBuilder();
             int count = 0;
 
-            var searchResults = kernel.Memory.SearchAsync("api-url-documentation", query, limit, minRelevanceScore);
+            var searchResults = kernel.Memory.SearchAsync(collectionName, query, limit, minRelevanceScore);
 
             await foreach (var searchResult in searchResults)
             {

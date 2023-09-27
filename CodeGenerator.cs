@@ -1,8 +1,10 @@
 ﻿using CodeGenerator.Models;
 using CodeGenerator.Services;
 using Microsoft.Extensions.Configuration;
-using Spectre.Console;
+using Microsoft.SemanticKernel;
 using CodeGenerator.Constants;
+using Microsoft.SemanticKernel.Connectors.Memory.Qdrant;
+using Spectre.Console;
 
 namespace CodeGenerator
 {
@@ -17,7 +19,7 @@ namespace CodeGenerator
 
         public async Task Generate()
         {
-            // Get OpenAI information and insert to OpenAI config
+            // Prepare configuration
             var openAIConfig = new OpenAIConfig()
             {
                 Model = _configuration["OpenAI:Model"]!,
@@ -25,7 +27,6 @@ namespace CodeGenerator
                 Key = _configuration["OpenAI:Key"]!
             };
 
-            // Get Jira information and insert to Jira config
             var jiraConfig = new JiraConfig()
             {
                 Organization = _configuration["Jira:Organization"]!,
@@ -33,67 +34,80 @@ namespace CodeGenerator
                 Key = _configuration["Jira:Key"]!
             };
 
-            // Get Qdrant information and insert to Qdrant config
             var qdrantConfig = new QdrantConfig()
             {
                 Host = _configuration["Qdrant:Host"]!,
                 Key = _configuration["Qdrant:Key"]!
             };
 
+            // Prepare kernel
+            var builder = new KernelBuilder();
+            builder.WithOpenAIChatCompletionService(openAIConfig.Model, openAIConfig.Key);
+            builder.WithOpenAITextEmbeddingGenerationService(openAIConfig.Embedding, openAIConfig.Key);
+            IKernel kernel = builder.Build();
+
+            HttpClient httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Add("api-key", qdrantConfig.Key);
+            httpClient.BaseAddress = new Uri(qdrantConfig.Host);
+            kernel.UseMemory(new QdrantMemoryStore(httpClient, 1536));
+
+            var purpose = Route.MainPage();
+            var userInput = new UserInput();
+            switch(purpose)
+            {
+                case EmbeddingPurpose.ListCollection:
+                    await new EmbeddingService(kernel, _configuration).ListCollection(qdrantConfig);
+                    break;
+                case EmbeddingPurpose.AddNewCollection:
+                    await new EmbeddingService(kernel, _configuration).AddNewCollection();
+                    break;
+                case EmbeddingPurpose.DeleteCollection:
+                    await new EmbeddingService(kernel, _configuration).DeleteCollection(qdrantConfig);
+                    break;
+                case GeneratePurpose.GenerateFromJira:
+                    userInput = await GetUserInput(GeneratePurpose.GenerateFromJira);
+                    await ProjectGeneratorService.Create(userInput);
+                    var requirement = await JiraService.GetJiraIssueDetails(jiraConfig, userInput);
+                    await new LLMService(kernel, _configuration).GenerateFromJira(userInput, requirement);
+                    break;
+                case GeneratePurpose.GenerateFromAPI:
+                    userInput = await GetUserInput(GeneratePurpose.GenerateFromAPI);
+                    await ProjectGeneratorService.Create(userInput);
+                    await new LLMService(kernel, _configuration).GenerateFromAPI(userInput, qdrantConfig);
+                    break;
+                case GeneratePurpose.GenerateFromJiraAndAPI:
+                    userInput = await GetUserInput(GeneratePurpose.GenerateFromJiraAndAPI);
+                    await ProjectGeneratorService.Create(userInput);
+                    requirement = await JiraService.GetJiraIssueDetails(jiraConfig, userInput);
+                    await new LLMService(kernel, _configuration).GenerateFromAPI(userInput, qdrantConfig, requirement);
+                    break;
+                case GeneratePurpose.UpdateSolution:
+                    break;
+            }
+        }
+
+        private async Task<UserInput> GetUserInput(string purpose)
+        {
             var userInput = new UserInput();
 
-            var purpose = AnsiConsole.Prompt(
-                        new SelectionPrompt<string>()
-                        .Title("What do you want to do?")
-                        .PageSize(4)
-                        .HighlightStyle("steelblue1")
-                        .AddChoices(new[] {
-                            Purpose.GenerateFromJira,
-                            Purpose.GenerateFromAPI,
-                            Purpose.GenerateFromJiraAndAPI,
-                            Purpose.UpdateSolution
-                        }));
-
-            if (purpose != Purpose.UpdateSolution)
+            AnsiConsole.Write(new Markup($"[{Theme.Primary}]Prompt:[/]\n" + $"[{Theme.Secondary}]> [/]"));
+            userInput.Prompt = Console.ReadLine()!;
+            if (purpose != GeneratePurpose.GenerateFromAPI)
             {
-                Console.WriteLine("Prompt: ");
-                userInput.Prompt = Console.ReadLine()!;
-                if (purpose != Purpose.GenerateFromAPI)
-                {
-                    Console.WriteLine("Jira Issue Key: ");
-                    userInput.JiraIssueKey = Console.ReadLine()!;
-                }
-                if (purpose != Purpose.GenerateFromJira)
-                {
-                    Console.WriteLine("API Documentation URL: ");
-                    userInput.APIDocumentationURL = Console.ReadLine()!;
-                }
-                Console.WriteLine("Project Name: ");
-                userInput.ProjectName = Console.ReadLine()!;
-                Console.WriteLine("Project Location: ");
-                userInput.ProjectLocation = Console.ReadLine()!;
+                AnsiConsole.Write(new Markup($"\n[{Theme.Primary}]Jira issue key:[/]\n" + $"[{Theme.Secondary}]> [/]"));
+                userInput.JiraIssueKey = Console.ReadLine()!;
             }
-            else
+            if (purpose != GeneratePurpose.GenerateFromJira)
             {
-                // TODO: define inputs for update solution
+                AnsiConsole.Write(new Markup($"\n[{Theme.Primary}]Collection Name:[/]\n" + $"[{Theme.Secondary}]> [/]"));
+                userInput.CollectionName = Console.ReadLine()!;
             }
+            AnsiConsole.Write(new Markup($"\n[{Theme.Primary}]Project Name:[/]\n" + $"[{Theme.Secondary}]> [/]"));
+            userInput.ProjectName = Console.ReadLine()!;
+            AnsiConsole.Write(new Markup($"\n[{Theme.Primary}]Project Location:[/]\n" + $"[{Theme.Secondary}]> [/]"));
+            userInput.ProjectLocation = Console.ReadLine()!;
 
-            var requirement = string.Empty;
-
-            if (!string.IsNullOrEmpty(userInput.JiraIssueKey))
-                requirement = await JiraService.GetJiraIssueDetails(jiraConfig, userInput);
-
-            if (string.IsNullOrEmpty(userInput.APIDocumentationURL))
-            {
-                await ProjectGeneratorService.Create(userInput);
-                await LLMService.GenerateCode(userInput, openAIConfig, purpose, requirement);
-            }
-            else
-            {
-                await ProjectGeneratorService.Create(userInput);
-                var webContent = await WebScrapingService.GetWebContent(userInput.APIDocumentationURL);
-                await LLMService.GenerateCode(userInput, openAIConfig, purpose, !string.IsNullOrEmpty(requirement) ? requirement : null, webContent, qdrantConfig);
-            }
+            return userInput;
         }
     }
 }

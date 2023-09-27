@@ -27,12 +27,12 @@ namespace CodeGenerator.Services
             string content = File.ReadAllText(path);
             content = content.Trim();
             content = content.Replace("Version=\"5.0.0\"", "Version=\"2.0.0\"");
+            string modifiedContent = content;
 
             if (!content.StartsWith("<Project"))
-            {
-                string modifiedContent = "<Project Sdk=\"Microsoft.NET.Sdk\">\n" + content + "\n</Project>";
-                File.WriteAllText(path, modifiedContent);
-            }
+                modifiedContent = "<Project Sdk=\"Microsoft.NET.Sdk\">\n" + content + "\n</Project>";
+
+            File.WriteAllText(path, modifiedContent);
         }
 
         private static async Task<string> CreateSolution(UserInput userInput)
