@@ -29,7 +29,7 @@ cd llm-code-generator
   "Jira": {
     "Host": "YOUR_JIRA_HOST"
     "Username": "YOUR_USERNAME",
-    "Key": "YOUR_JIRA_KEY"
+    "Key": "YOUR_JIRA_API_TOKEN"
   },
   "Qdrant": {
     "Host": "YOUR_QDRANT_CLOUD_HOST"
