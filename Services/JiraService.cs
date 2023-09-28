@@ -12,7 +12,7 @@ namespace CodeGenerator.Services
             var httpClientService = new HttpClientService($"https://{jiraConfig.Organization}/rest/api/3/issue/{userInput.JiraIssueKey}?fields=description");
             var response = httpClientService.GetWithBasicAuthTokenAsync<GetIssueResponse>(AuthHelper.GetBasicAuthTokenFromUserPass(jiraConfig.Username, jiraConfig.Key)).Result;
 
-            var completeDescription = await ExtractTextFromContent(response.Fields.Description.Content);
+            var completeDescription = await ExtractTextFromContent(response.Fields.Description.Content!);
 
             return completeDescription;
         }

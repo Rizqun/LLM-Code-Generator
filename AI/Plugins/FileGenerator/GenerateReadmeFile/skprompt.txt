@@ -1,0 +1,3 @@
+﻿Please create readme file to help user understand the code below:
+
+{{file.Read $path}}

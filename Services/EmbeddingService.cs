@@ -71,7 +71,7 @@ namespace CodeGenerator.Services
             if (!string.IsNullOrEmpty(collectionName))
             {
                 var httpClientService = new HttpClientService($"{qdrantConfig.Host}/collections/{collectionName}");
-                var result = await httpClientService.DeleteWithApiKeyAsync(qdrantConfig.Key);
+                await httpClientService.DeleteWithApiKeyAsync(qdrantConfig.Key);
             }
 
             await new Route(_configuration).Back();
@@ -92,10 +92,7 @@ namespace CodeGenerator.Services
                         id: Guid.NewGuid().ToString()
                     );
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                }
+                catch (Exception) { }
             }
         }
     }

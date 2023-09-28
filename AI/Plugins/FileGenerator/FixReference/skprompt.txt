@@ -1,0 +1,7 @@
+﻿We have following xml csproj file:
+{{file.Read $path}}
+
+And we got this error:
+{{$error}}
+
+Please return the full xml csproj file that already fixed

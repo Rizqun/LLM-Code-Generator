@@ -1,25 +1,36 @@
-﻿Based on the request below:
----
-{{$prompt}}
----
+﻿Based on the following request:
 
-And the information below:
----
+{{$prompt}}
+
+And some information below:
+
 {{recall $question}}
----
 
 {{$inputPrompt}}
 
-Please return an input in JSON format without any opening or closing words. 
+Please determine the input for the application that will be inserted by user and return in JSON Array format without any opening or closing words.
 Please also add input for user to authenticate to be able to hit the API url, like input for access token, PAT, etc.
-The JSON must be in this format:
-{
-	"inputName": "data type of the input"
-}
+
+The JSON Array must be in this format:
+[
+	{
+		"name": "input name",
+		"type": "input data type",
+		"isRequired": boolean value, either true or false
+	}
+]
 
 For example:
-{
-	"input1": "data type of input 1",
-	"input2": "data type of input 2",
+[
+	{
+		"name": "input name 1",
+		"type": "input data type",
+		"isRequired": true
+	},
+	{
+		"name": "input name 2",
+		"type": "input data type",
+		"isRequired": false
+	},
 	...
-}
+]

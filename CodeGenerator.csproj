@@ -53,6 +53,12 @@
 	  <None Remove="AI\Plugins\APICodeGenerator\GetMethodAndEndpoint\skprompt.txt" />
 	  <None Remove="AI\Plugins\APICodeGenerator\GetRequestBodyProperty\config.json" />
 	  <None Remove="AI\Plugins\APICodeGenerator\GetRequestBodyProperty\skprompt.txt" />
+	  <None Remove="AI\Plugins\FileGenerator\FixReference\config.json" />
+	  <None Remove="AI\Plugins\FileGenerator\FixReference\skprompt.txt" />
+	  <None Remove="AI\Plugins\FileGenerator\FixService\config.json" />
+	  <None Remove="AI\Plugins\FileGenerator\FixService\skprompt.txt" />
+	  <None Remove="AI\Plugins\FileGenerator\GenerateReadmeFile\config.json" />
+	  <None Remove="AI\Plugins\FileGenerator\GenerateReadmeFile\skprompt.txt" />
 	  <None Remove="AI\Plugins\FileGenerator\UpdateMethodWithAPI\config.json" />
 	  <None Remove="AI\Plugins\FileGenerator\UpdateMethodWithAPI\skprompt.txt" />
 	  <None Remove="AI\Plugins\FileGenerator\UpdateMethodWithJira\config.json" />

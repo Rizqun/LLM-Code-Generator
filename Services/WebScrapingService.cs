@@ -1,5 +1,4 @@
 ﻿using HtmlAgilityPack;
-using Microsoft.SemanticKernel.Connectors.Memory.Qdrant;
 using System.Text.RegularExpressions;
 
 namespace CodeGenerator.Services

@@ -14,4 +14,3 @@ Please use Console.Writeline to asks user to give an input, use Console.Readline
 Please update the usings based on the code you provided, so the program can run succesfully.
 
 Please only output the solution within the method without any opening and closing sentences.
-You can give comment to help explain the code.

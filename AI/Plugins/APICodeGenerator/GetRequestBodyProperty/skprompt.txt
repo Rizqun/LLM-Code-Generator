@@ -1,4 +1,4 @@
-﻿We will build a console application based on the following request:
+﻿We will build a .NET console app based on the following request:
 ---
 {{$prompt}}
 ---

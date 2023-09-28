@@ -1,8 +1,5 @@
-﻿using CodeGenerator.Constants;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Orchestration;
+﻿using Microsoft.SemanticKernel.Orchestration;
 using Microsoft.SemanticKernel.SkillDefinition;
-using Microsoft.VisualBasic.FileIO;
 using System.ComponentModel;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -11,13 +8,6 @@ namespace CodeGenerator.AI.Plugins
 {
     public class CodeGenerator
     {
-        private readonly IKernel _kernel;
-
-        public CodeGenerator(IKernel kernel)
-        {
-            _kernel = kernel;
-        }
-
         [SKFunction, Description("Get the final prompt used to get the input")]
         public string GeneratePromptToGetInput(SKContext context)
         {
@@ -29,12 +19,12 @@ namespace CodeGenerator.AI.Plugins
 
             var sb = new StringBuilder();
 
-            sb.AppendLine("The application will hit the API endpoint below:");
+            sb.AppendLine("We will hit the following API endpoint:");
             sb.AppendLine($"---\n{appEndpoint}\n---");
 
             if (!string.IsNullOrEmpty(appRequestBody))
             {
-                sb.AppendLine("\nWe have the following request body:");
+                sb.AppendLine("\nWe also have the following request body:");
                 sb.AppendLine($"---\n{appRequestBody}\n---");
             }
 

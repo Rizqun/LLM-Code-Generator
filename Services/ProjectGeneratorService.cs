@@ -1,5 +1,6 @@
 ﻿using CodeGenerator.Helpers;
 using CodeGenerator.Models;
+using System.Text.RegularExpressions;
 
 namespace CodeGenerator.Services
 {
@@ -22,25 +23,66 @@ namespace CodeGenerator.Services
             return targetFolder;
         }
 
-        public static void NormalizeCsprojFile(string path)
+        public static void NormalizeGeneratedFile(UserInput userInput)
         {
-            string content = File.ReadAllText(path);
+            NormalizeCsprojFile(userInput);
+            NormalizeService(userInput);
+            NormalizeProgram(userInput);
+        }
+
+        public static void NormalizeCsprojFile(UserInput userInput)
+        {
+            var csprojFile = Path.Combine(userInput.ProjectLocation, $"{userInput.ProjectName}.csproj");
+
+            string content = File.ReadAllText(csprojFile);
             content = content.Trim();
             content = content.Replace("Version=\"5.0.0\"", "Version=\"2.0.0\"");
             string modifiedContent = content;
 
             if (!content.StartsWith("<Project"))
-                modifiedContent = "<Project Sdk=\"Microsoft.NET.Sdk\">\n" + content + "\n</Project>";
+            {
+                if (content.StartsWith("<"))
+                {
+                    modifiedContent = "<Project Sdk=\"Microsoft.NET.Sdk\">\n" + content + "\n</Project>";
+                }
+                else
+                {
+                    string pattern = @"<Project[^>]*>.*?</Project>";
+                    Match match = Regex.Match(modifiedContent, pattern, RegexOptions.Singleline);
 
-            File.WriteAllText(path, modifiedContent);
+                    if (match.Success)
+                    {
+                        modifiedContent = match.Value;
+                    }
+                }
+            }
+
+            File.WriteAllText(csprojFile, modifiedContent);
         }
 
-        private static async Task<string> CreateSolution(UserInput userInput)
+        public static void NormalizeService(UserInput userInput)
         {
-            if (File.Exists(Path.Combine(userInput.ProjectLocation, $"{userInput.ProjectName}.sln")))
-                return "";
+            var serviceFile = Path.Combine(userInput.ProjectLocation, $"Service.cs");
 
-            return await CommandHelper.Execute("dotnet", $"new sln -n {userInput.ProjectName} -o \"{userInput.ProjectLocation}\"");
+            var content = File.ReadAllText(serviceFile);
+            var modifiedContent = content.Replace("namespace Project", $"namespace {userInput.ProjectName}");
+
+            File.WriteAllText(serviceFile, modifiedContent);
+        }
+
+        public static void NormalizeProgram(UserInput userInput)
+        {
+            var programFile = Path.Combine(userInput.ProjectLocation, $"Program.cs");
+
+            var content = File.ReadAllText(programFile);
+            var modifiedContent = content.Replace("using Project", $"using {userInput.ProjectName}");
+
+            File.WriteAllText(programFile, modifiedContent);
+        }
+
+        private static async Task CreateSolution(UserInput userInput)
+        {
+            await CommandHelper.Execute("dotnet", $"new sln -n {userInput.ProjectName} -o \"{userInput.ProjectLocation}\"");
         }
 
         private static async Task RenameCsprojAndAddToSolution(UserInput userInput)

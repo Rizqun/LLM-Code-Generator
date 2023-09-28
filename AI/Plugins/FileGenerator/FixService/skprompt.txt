@@ -1,0 +1,8 @@
+﻿We have following c# file:
+{{file.Read $path}}
+
+And we got this error:
+{{$error}}
+
+Please return the full c# file that already fixed.
+Please only output the modified c# file without opening and closing statement.

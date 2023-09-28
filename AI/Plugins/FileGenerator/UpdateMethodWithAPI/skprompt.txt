@@ -21,7 +21,7 @@ We also need user to input the following parameters:
 Please complete the 'Public static async Task Execute' method to implement the solution based on the user prompt.
 Set the namespace name as 'Project' and the class name as 'Service'.
 Please use Console.Writeline to asks user to give an input, use Console.Readline for the user to insert the input value, and use Console.Writeline to return the output if it is required.
-Please update the usings based on the code you provided, so the program can run succesfully.
+Please add the usings if the code you provided require additional package.
+Please use JsonSerializer over Newtonsoft.
 
 Please only output the solution within the method without any opening and closing sentences.
-You can give comment to help people understand the code.

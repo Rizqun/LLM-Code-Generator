@@ -1,5 +1,6 @@
 ﻿using CodeGenerator;
 using Microsoft.Extensions.Configuration;
+
 class Program
 {
     static async Task Main(string[] args)
