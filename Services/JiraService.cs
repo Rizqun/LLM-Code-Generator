@@ -9,7 +9,7 @@ namespace CodeGenerator.Services
     {
         public static async Task<string> GetJiraIssueDetails(JiraConfig jiraConfig, UserInput userInput)
         {
-            var httpClientService = new HttpClientService($"https://{jiraConfig.Organization}/rest/api/3/issue/{userInput.JiraIssueKey}?fields=description");
+            var httpClientService = new HttpClientService($"https://{jiraConfig.Host}/rest/api/3/issue/{userInput.JiraIssueKey}?fields=description");
             var response = httpClientService.GetWithBasicAuthTokenAsync<GetIssueResponse>(AuthHelper.GetBasicAuthTokenFromUserPass(jiraConfig.Username, jiraConfig.Key)).Result;
 
             var completeDescription = await ExtractTextFromContent(response.Fields.Description.Content!);

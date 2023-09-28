@@ -30,8 +30,7 @@ namespace CodeGenerator
                         {
                             GeneratePurpose.GenerateFromJira,
                             GeneratePurpose.GenerateFromAPI,
-                            GeneratePurpose.GenerateFromJiraAndAPI,
-                            GeneratePurpose.UpdateSolution
+                            GeneratePurpose.GenerateFromJiraAndAPI
                         }));
         }
 

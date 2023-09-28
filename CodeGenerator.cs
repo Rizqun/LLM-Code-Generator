@@ -29,7 +29,7 @@ namespace CodeGenerator
 
             var jiraConfig = new JiraConfig()
             {
-                Organization = _configuration["Jira:Organization"]!,
+                Host = _configuration["Jira:Host"]!,
                 Username = _configuration["Jira:Username"]!,
                 Key = _configuration["Jira:Key"]!
             };
@@ -80,8 +80,6 @@ namespace CodeGenerator
                     await ProjectGeneratorService.Create(userInput);
                     requirement = await JiraService.GetJiraIssueDetails(jiraConfig, userInput);
                     await new LLMService(kernel, _configuration).GenerateFromAPI(userInput, qdrantConfig, requirement);
-                    break;
-                case GeneratePurpose.UpdateSolution:
                     break;
             }
         }
