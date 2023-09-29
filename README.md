@@ -7,7 +7,6 @@ LLM Code Generator is a console application built in .NET that empowers users to
 
 - [HtmlAgilityPack](https://html-agility-pack.net) - Version 1.11.52
 - [Microsoft.Extensions.Configuration.Json](https://dot.net) - Version 8.0.0-preview.7.23375.6
-- [Microsoft.ML](https://dot.net/ml) - Version 2.0.1
 - [Microsoft.SemanticKernel](https://aka.ms/semantic-kernel) - Version 0.24.230918.1-preview
 - [Microsoft.SemanticKernel.Connectors.Memory.Qdrant](https://aka.ms/semantic-kernel) - Version 0.24.230918.1-preview
 - [Spectre.Console](https://github.com/spectreconsole/spectre.console) - Version 0.47.0
