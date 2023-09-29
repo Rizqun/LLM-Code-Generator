@@ -19,6 +19,7 @@ git clone https://github.com/Rizqun/LLM-Code-Generator.git
 cd llm-code-generator
 ```
 **2. Configure `appsettings.json`**
+
 You can create Jira API token here [Create Jira API Token](https://id.atlassian.com/manage-profile/security/api-tokens) and Qdrant cloud account here [Qdrant Cloud](https://cloud.qdrant.io/login)
 ```
 {
