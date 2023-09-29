@@ -19,6 +19,8 @@ git clone https://github.com/Rizqun/LLM-Code-Generator.git
 cd llm-code-generator
 ```
 **2. Configure `appsettings.json`**
+
+You can create Jira API token here [Create Jira API Token](https://id.atlassian.com/manage-profile/security/api-tokens) and Qdrant cloud account here [Qdrant Cloud](https://cloud.qdrant.io/login)
 ```
 {
   "OpenAI": {
@@ -70,4 +72,5 @@ Delete collection require you to input the name of collection that you wanted to
 
 There are 3 options in generate feature. The input required depends on the option that you choose. Basically it needs you to input your prompt, the jira key that will give the application detailed information about requirement, the collection name from Qdrant, project name for the generated solution, and the project location.
 
-![Screenshot 2023-09-28 203835](https://github.com/Rizqun/LLM-Code-Generator/assets/50146188/fcfe21a9-df58-4680-8071-9f4a2ed7231e)
+![Screenshot 2023-09-29 100015](https://github.com/Rizqun/LLM-Code-Generator/assets/50146188/3d9ba1be-7098-4a41-b3ef-e2376a09d5ad)
+
