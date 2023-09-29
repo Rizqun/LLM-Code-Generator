@@ -63,7 +63,7 @@ namespace CodeGenerator.Services
                     AnsiConsole.MarkupLine("Csproj successfully created!");
 
                     ctx.Status(" Normalize all generated files and create README...");
-                    ProjectGeneratorService.NormalizeGeneratedFile(userInput);
+                    await ProjectGeneratorService.NormalizeGeneratedFile(userInput);
 
                     // Update readme file
                     var generateReadmeFunction = _kernel.Skills.GetFunction("FileGenerator", "GenerateReadmeFile");
@@ -73,10 +73,12 @@ namespace CodeGenerator.Services
                     context.Set("content", result.Variables["INPUT"]);
 
                     result = await _kernel.RunAsync(context, fileFunction);
+                    AnsiConsole.MarkupLine("Normalization success!");
                     AnsiConsole.MarkupLine("README successfully created!");
 
                     // Test to run the solution
                     ctx.Status(" Build generated solution...");
+                    Thread.Sleep(1000);
                     var runResult = await CommandHelper.Execute("dotnet", $"build {userInput.ProjectLocation}");
 
                     if (!string.IsNullOrEmpty(runResult.error))
@@ -94,7 +96,7 @@ namespace CodeGenerator.Services
                             result = await _kernel.RunAsync(context, fixReferenceFunction, cleanUpAIResponseFunction, fileFunction);
                             AnsiConsole.MarkupLine("The error in Csproj file has been fixed!");
 
-                            ProjectGeneratorService.NormalizeCsprojFile(userInput);
+                            await ProjectGeneratorService.NormalizeCsprojFile(userInput);
                         }
                         else if (runResult.error.Contains("does not contain a definition"))
                         {
@@ -229,7 +231,7 @@ namespace CodeGenerator.Services
                     AnsiConsole.MarkupLine("Csproj successfully created!");
 
                     ctx.Status(" Normalize all generated files and create README...");
-                    ProjectGeneratorService.NormalizeGeneratedFile(userInput);
+                    await ProjectGeneratorService.NormalizeGeneratedFile(userInput);
 
                     // Update README
                     var generateReadmeFunction = _kernel.Skills.GetFunction("FileGenerator", "GenerateReadmeFile");
@@ -238,10 +240,12 @@ namespace CodeGenerator.Services
                     context.Set("path", Path.Combine(userInput.ProjectLocation, "README.md"));
                     context.Set("content", result.Variables["INPUT"]);
                     result = await _kernel.RunAsync(context, fileFunction);
+                    AnsiConsole.MarkupLine("Normalization success!");
                     AnsiConsole.MarkupLine("README successfully created!");
 
                     // Test to run the solution
                     ctx.Status(" Build generated solution...");
+                    Thread.Sleep(1000);
                     var runResult = await CommandHelper.Execute("dotnet", $"build {userInput.ProjectLocation}");
 
                     if (!string.IsNullOrEmpty(runResult.error))
@@ -259,7 +263,7 @@ namespace CodeGenerator.Services
                             result = await _kernel.RunAsync(context, fixReferenceFunction, cleanUpAIResponseFunction, fileFunction);
                             AnsiConsole.MarkupLine($"The error in Csproj file has been [{Theme.Success}]fixed![/]");
 
-                            ProjectGeneratorService.NormalizeCsprojFile(userInput);
+                            await ProjectGeneratorService.NormalizeCsprojFile(userInput);
                         }
                         else if (runResult.error.Contains("does not contain a definition"))
                         {

@@ -20,38 +20,42 @@ namespace CodeGenerator.Helpers
                 CreateNoWindow = true
             };
 
-            using (var process = Process.Start(info))
+            using (var process = new Process())
             {
-                if (process != null)
+                process.StartInfo = info;
+
+                process.ErrorDataReceived += (sender, e) =>
                 {
-                    var errorReader = process.StandardError;
-                    while (!errorReader.EndOfStream)
+                    if (e.Data != null)
                     {
-                        var line = errorReader.ReadLine();
-                        errorBuilder.AppendLine(line);
+                        errorBuilder.AppendLine(e.Data);
                     }
+                };
 
-                    var reader = process.StandardOutput;
-                    while (!reader.EndOfStream)
+                process.OutputDataReceived += (sender, e) =>
+                {
+                    if (e.Data != null)
                     {
-                        var line = reader.ReadLine();
-
-                        if (!string.IsNullOrEmpty(line))
+                        if (e.Data.Contains("error"))
                         {
-                            if (line.Contains("error"))
-                            {
-                                errorBuilder.AppendLine(line);
-                            }
-                            else
-                            {
-                                returnValue.AppendLine(line);
-                            }
+                            errorBuilder.AppendLine(e.Data);
+                        }
+                        else
+                        {
+                            returnValue.AppendLine(e.Data);
                         }
                     }
-                }
-            }
+                };
 
-            return (returnValue.ToString(), errorBuilder.ToString());
+                process.Start();
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+
+                // Wait for the process to exit.
+                await process.WaitForExitAsync();
+
+                return (returnValue.ToString(), errorBuilder.ToString());
+            }
         }
     }
 }

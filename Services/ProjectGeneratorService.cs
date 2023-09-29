@@ -23,18 +23,18 @@ namespace CodeGenerator.Services
             return targetFolder;
         }
 
-        public static void NormalizeGeneratedFile(UserInput userInput)
+        public static async Task NormalizeGeneratedFile(UserInput userInput)
         {
-            NormalizeCsprojFile(userInput);
-            NormalizeService(userInput);
-            NormalizeProgram(userInput);
+            await NormalizeCsprojFile(userInput);
+            await NormalizeService(userInput);
+            await NormalizeProgram(userInput);
         }
 
-        public static void NormalizeCsprojFile(UserInput userInput)
+        public static async Task NormalizeCsprojFile(UserInput userInput)
         {
             var csprojFile = Path.Combine(userInput.ProjectLocation, $"{userInput.ProjectName}.csproj");
 
-            string content = File.ReadAllText(csprojFile);
+            string content = await File.ReadAllTextAsync(csprojFile);
             content = content.Trim();
             content = content.Replace("Version=\"5.0.0\"", "Version=\"2.0.0\"");
             string modifiedContent = content;
@@ -57,27 +57,27 @@ namespace CodeGenerator.Services
                 }
             }
 
-            File.WriteAllText(csprojFile, modifiedContent);
+            await File.WriteAllTextAsync(csprojFile, modifiedContent);
         }
 
-        public static void NormalizeService(UserInput userInput)
+        public static async Task NormalizeService(UserInput userInput)
         {
             var serviceFile = Path.Combine(userInput.ProjectLocation, $"Service.cs");
 
-            var content = File.ReadAllText(serviceFile);
+            var content = await File.ReadAllTextAsync(serviceFile);
             var modifiedContent = content.Replace("namespace Project", $"namespace {userInput.ProjectName}");
 
-            File.WriteAllText(serviceFile, modifiedContent);
+            await File.WriteAllTextAsync(serviceFile, modifiedContent);
         }
 
-        public static void NormalizeProgram(UserInput userInput)
+        public static async Task NormalizeProgram(UserInput userInput)
         {
             var programFile = Path.Combine(userInput.ProjectLocation, $"Program.cs");
 
-            var content = File.ReadAllText(programFile);
+            var content = await File.ReadAllTextAsync(programFile);
             var modifiedContent = content.Replace("using Project", $"using {userInput.ProjectName}");
 
-            File.WriteAllText(programFile, modifiedContent);
+            await File.WriteAllTextAsync(programFile, modifiedContent);
         }
 
         private static async Task CreateSolution(UserInput userInput)
