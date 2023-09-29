@@ -38,18 +38,26 @@ namespace CodeGenerator.Services
                     // Simulate some work
                     var collections = await _kernel.Memory.GetCollectionsAsync();
 
-                    var count = 1;
-                    foreach (var collection in collections)
+                    if (collections.Count > 0)
                     {
-                        var httpClientService = new HttpClientService($"{qdrantConfig.Host}/collections/{collection}");
-                        var collectionInfo = await httpClientService.GetWithApiKeyAsync<CollectionInfo>(qdrantConfig.Key);
+                        var count = 1;
+                        foreach (var collection in collections)
+                        {
+                            var httpClientService = new HttpClientService($"{qdrantConfig.Host}/collections/{collection}");
+                            var collectionInfo = await httpClientService.GetWithApiKeyAsync<CollectionInfo>(qdrantConfig.Key);
 
-                        collectionsInfo.Add(collectionInfo);
-                        table.AddRow($"[{Theme.Secondary}]{count}[/]", $"[{Theme.Secondary}]{collection}[/]", $"[{Theme.Secondary}]{collectionInfo.Result.VectorsCount}[/]");
-                        count++;
+                            collectionsInfo.Add(collectionInfo);
+                            table.AddRow($"[{Theme.Secondary}]{count}[/]", $"[{Theme.Secondary}]{collection}[/]", $"[{Theme.Secondary}]{collectionInfo.Result.VectorsCount}[/]");
+
+                            count++;
+                        }
+
+                        AnsiConsole.Write(table);
                     }
-
-                    AnsiConsole.Write(table);
+                    else
+                    {
+                        AnsiConsole.MarkupLine("No collection found.");
+                    }
                 });
 
             await new Route(_configuration).Back();
