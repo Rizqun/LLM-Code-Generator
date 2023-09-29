@@ -51,9 +51,7 @@ namespace CodeGenerator.Helpers
                 }
             }
 
-            var error = errorBuilder.ToString();
-
-            return (returnValue.ToString(), error);
+            return (returnValue.ToString(), errorBuilder.ToString());
         }
     }
 }

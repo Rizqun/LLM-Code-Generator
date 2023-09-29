@@ -65,18 +65,18 @@ namespace CodeGenerator
                     await new EmbeddingService(kernel, _configuration).DeleteCollection(qdrantConfig);
                     break;
                 case GeneratePurpose.GenerateFromJira:
-                    userInput = await GetUserInput(GeneratePurpose.GenerateFromJira);
+                    userInput = GetUserInput(GeneratePurpose.GenerateFromJira);
                     await ProjectGeneratorService.Create(userInput);
                     var requirement = await JiraService.GetJiraIssueDetails(jiraConfig, userInput);
                     await new LLMService(kernel, _configuration).GenerateFromJira(userInput, requirement);
                     break;
                 case GeneratePurpose.GenerateFromAPI:
-                    userInput = await GetUserInput(GeneratePurpose.GenerateFromAPI);
+                    userInput = GetUserInput(GeneratePurpose.GenerateFromAPI);
                     await ProjectGeneratorService.Create(userInput);
                     await new LLMService(kernel, _configuration).GenerateFromAPI(userInput, qdrantConfig);
                     break;
                 case GeneratePurpose.GenerateFromJiraAndAPI:
-                    userInput = await GetUserInput(GeneratePurpose.GenerateFromJiraAndAPI);
+                    userInput = GetUserInput(GeneratePurpose.GenerateFromJiraAndAPI);
                     await ProjectGeneratorService.Create(userInput);
                     requirement = await JiraService.GetJiraIssueDetails(jiraConfig, userInput);
                     await new LLMService(kernel, _configuration).GenerateFromAPI(userInput, qdrantConfig, requirement);
@@ -84,7 +84,7 @@ namespace CodeGenerator
             }
         }
 
-        private async Task<UserInput> GetUserInput(string purpose)
+        private UserInput GetUserInput(string purpose)
         {
             var userInput = new UserInput();
 
