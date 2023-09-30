@@ -49,19 +49,19 @@ dotnet run
 ## Usage
 LLM Code Generator has two main features, embedding and generate. In embedding, user able to list collection from Qdrant, add new collection, and delete collection. In generate, user able to generate code using Jira, generate code using API documentation URL, and generate code using Jira and API documentation URL. Please note that you need to have a collection in Qdrant to be able to generate using API documentation URL.
 
-![Screenshot 2023-09-28 201609](https://github.com/Rizqun/LLM-Code-Generator/assets/50146188/6de8e5aa-3ed7-453f-8f7c-8bebc36e5813)
+![Screenshot 2023-09-28 201609](https://github.com/Rizqun/LLM-Code-Generator/assets/50146188/5c6696c7-9a7d-41c6-84d5-4b2e0ec0f8a0)
 
 **1. List Collection**
 
 List collection will list all of your collection in Qdrant, including the total of vectors for each collection.
 
-![Screenshot 2023-09-28 202103](https://github.com/Rizqun/LLM-Code-Generator/assets/50146188/0f172ff9-b7d6-4916-9ad5-32a3395cfa61)
+![Screenshot 2023-09-28 202103](https://github.com/Rizqun/LLM-Code-Generator/assets/50146188/025ab1ad-e79c-4ecd-b4b6-845795c01425)
 
 **2. Add Collection**
 
 Add new collection require you to input the name of collection and the API documentation URL that you want to embed. You can add multiple API documentation URL by separating it using comma. Some API documentation URL has its properties, request body, authentication method, and the other important things in different URL, so it would be helpful in that case!
 
-![Screenshot 2023-09-28 202745](https://github.com/Rizqun/LLM-Code-Generator/assets/50146188/d949ff82-8cdf-4ce5-9cc1-795a360d3dfb)
+![Screenshot 2023-09-28 202745](https://github.com/Rizqun/LLM-Code-Generator/assets/50146188/c5658697-00af-48a1-9737-fe65d070b23b)
 
 **3. Delete Collection**
 
@@ -71,5 +71,4 @@ Delete collection require you to input the name of collection that you wanted to
 
 There are 3 options in generate feature. The input required depends on the option that you choose. Basically it needs you to input your prompt, the jira key that will give the application detailed information about requirement, the collection name from Qdrant, project name for the generated solution, and the project location.
 
-![Screenshot 2023-09-29 100015](https://github.com/Rizqun/LLM-Code-Generator/assets/50146188/3d9ba1be-7098-4a41-b3ef-e2376a09d5ad)
-
+![Screenshot 2023-09-29 100015](https://github.com/Rizqun/LLM-Code-Generator/assets/50146188/8ea8c329-268d-4e73-a411-9ca2a99e2a64)
