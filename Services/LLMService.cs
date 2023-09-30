@@ -165,7 +165,7 @@ namespace CodeGenerator.Services
                         }
                         retry++;
                     }
-                    AnsiConsole.MarkupLine("\nSuccesfully obtained API method and endpoint information!");
+                    AnsiConsole.MarkupLine("\nSuccessfully obtained API method and endpoint information!");
 
                     if (string.IsNullOrEmpty(requirement))
                     {
@@ -186,7 +186,7 @@ namespace CodeGenerator.Services
 
                             ctx.Status(" Gathering information about request body...");
                             result = await _kernel.RunAsync(context, getRequestBodyFunction, cleanUpAIResponseFunction);
-                            AnsiConsole.MarkupLine("Succesfully obtained request body information!");
+                            AnsiConsole.MarkupLine("Successfully obtained request body information!");
                             context.Set("appRequestBody", result.Variables["INPUT"]);
                         }
 
@@ -197,7 +197,7 @@ namespace CodeGenerator.Services
 
                         ctx.Status(" Gathering information about application inputs...");
                         result = await _kernel.RunAsync(context, generatePromptToGetInputFunction, getApplicationInputFunction);
-                        AnsiConsole.MarkupLine("Succesfully obtained application inputs information!");
+                        AnsiConsole.MarkupLine("Successfully obtained application inputs information!");
                         context.Set("inputInformation", $"Input parameters:\"\n{result.Variables["INPUT"]}");
 
                         // Update service.cs
